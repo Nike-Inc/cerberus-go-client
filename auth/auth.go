@@ -1,8 +1,12 @@
+// Package auth contains various implementations for authenticating with Cerberus.
+// These implementations can be used standalone from the main Cerberus client
+// to get a login token or manage authentication without having to set up a full client
 package auth
 
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"os"
 )
 
@@ -29,4 +33,5 @@ type Auth interface {
 	// It returns a basic set of headers asking for a JSON response and has
 	// the authorization header set with the proper token
 	GetHeaders() (http.Header, error)
+	GetURL() *url.URL
 }

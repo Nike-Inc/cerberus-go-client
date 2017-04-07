@@ -52,3 +52,30 @@ type UserMetadata struct {
 	IsAdmin  string `json:"is_admin"`
 	Groups   string
 }
+
+// SafeDepositBox represents a safe deposit box API object
+type SafeDepositBox struct {
+	ID                   string                `json:",omitempty"`
+	Name                 string                `json:",omitempty"`
+	Path                 string                `json:",omitempty"`
+	CategoryID           string                `json:"category_id,omitempty"`
+	Description          string                `json:",omitempty"`
+	Owner                string                `json:",omitempty"`
+	UserGroupPermissions []UserGroupPermission `json:"user_group_permissions,omitempty"`
+	IAMRolePermissions   []IAMRole             `json:"iam_role_permissions,omitempty"`
+}
+
+// UserGroupPermission represents a user and group permission on an object
+type UserGroupPermission struct {
+	ID     string
+	Name   string
+	RoleID string `json:"role_id"`
+}
+
+// IAMRole represents an IAM permission on an object
+type IAMRole struct {
+	ID        string
+	AccountID string `json:"account_id"`
+	Name      string `json:"iam_role_name"`
+	RoleID    string `json:"role_id"`
+}

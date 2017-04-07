@@ -29,6 +29,10 @@ type UserAuth struct {
 
 // NewUserAuth returns a new UserAuth object given a valid Cerberus URL, username, and password
 func NewUserAuth(cerberusURL, username, password string) (*UserAuth, error) {
+	// Check for the environment variable if the user has set it
+	if os.Getenv("CERBERUS_URL") != "" {
+		cerberusURL = os.Getenv("CERBERUS_URL")
+	}
 	// Make sure there isn't a blank username, password, or URL
 	if len(username) == 0 {
 		return nil, fmt.Errorf("Username cannot be empty")
@@ -55,7 +59,8 @@ func NewUserAuth(cerberusURL, username, password string) (*UserAuth, error) {
 }
 
 // GetToken returns an existing token or performs all authentication steps
-// necessary to get a new token
+// necessary to get a new token. This should be called to authenticate the
+// client once it has been setup
 func (u *UserAuth) GetToken(f *os.File) (string, error) {
 	if u.IsAuthenticated() {
 		return u.token, nil
@@ -65,6 +70,11 @@ func (u *UserAuth) GetToken(f *os.File) (string, error) {
 		return "", err
 	}
 	return u.token, nil
+}
+
+// GetURL returns the URL used for Cerberus
+func (u *UserAuth) GetURL() *url.URL {
+	return u.baseURL
 }
 
 // IsAuthenticated returns whether or not there is a valid token. A valid token

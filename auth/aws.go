@@ -2,6 +2,7 @@ package auth
 
 import (
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 )
@@ -12,10 +13,19 @@ type AWSAuth struct {
 	region  string
 	roleARN string
 	expiry  time.Time
+	baseURL *url.URL
 }
 
 func NewAWSAuth(cerberusURL, roleARN, region string) (*AWSAuth, error) {
+	// Check for the environment variable if the user has set it
+	if os.Getenv("CERBERUS_URL") != "" {
+		cerberusURL = os.Getenv("CERBERUS_URL")
+	}
 	return &AWSAuth{}, nil
+}
+
+func (a *AWSAuth) GetURL() *url.URL {
+	return a.baseURL
 }
 
 func (a *AWSAuth) GetToken(f *os.File) (string, error) {
