@@ -87,6 +87,17 @@ func TestNewUserAuth(t *testing.T) {
 	})
 }
 
+func TestGetURL(t *testing.T) {
+	Convey("A valid client", t, func() {
+		c, _ := NewUserAuth("http://example.com", "user", "pass")
+		So(c, ShouldNotBeNil)
+		Convey("Should return URL", func() {
+			So(c.GetURL(), ShouldNotBeNil)
+			So(c.GetURL().String(), ShouldEqual, "http://example.com")
+		})
+	})
+}
+
 func WithServer(status api.AuthStatus, returnCode int, token, expectedPath, expectedMethod string, expectedHeaders map[string]string, f func(ts *httptest.Server)) func() {
 	return func() {
 		Convey("http requests should be correct", func(c C) {

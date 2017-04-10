@@ -1,5 +1,9 @@
 package: github.nike.com/ngp/cerberus-client-go
-import: []
+import:
+- package: github.com/hashicorp/vault
+  version: ~0.7.0
+  subpackages:
+  - api
 testImport:
 - package: github.com/smartystreets/goconvey
   version: ~1.6.2

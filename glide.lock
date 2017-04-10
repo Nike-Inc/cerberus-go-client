@@ -1,6 +1,10 @@
-hash: 2e08af4c515c6e702bf9a5b6970bfe324f3a2fc1ecb3f23976953736350564ac
-updated: 2017-04-04T14:15:14.561677723-07:00
-imports: []
+hash: 9da6dd329940c0150ac087e3127c5506e8156acd109e566a42644f3f8e0f0fdc
+updated: 2017-04-05T16:00:17.594495177-07:00
+imports:
+- name: github.com/hashicorp/vault
+  version: 614deacfca3f3b7162bbf30a36d6fc7362cd47f0
+  subpackages:
+  - api
 testImports:
 - name: github.com/gopherjs/gopherjs
   version: 3496c6f94e1b945f3fc9580f6982675c0a74cd6c
