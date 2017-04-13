@@ -1,7 +1,7 @@
 test:
 	go test -v `glide nv`
 bootstrap:
-	glide install --strip-vendor
+	glide install
 build:
 	go build -o cerberus
 
