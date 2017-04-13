@@ -1,6 +1,6 @@
 machine:
   environment:
-    GOVERSION: "1.7.5"
+    GOVERSION: "1.8.1"
     GOPATH:  "${HOME}/.go_workspace"
     WORKDIR: "${GOPATH}/src/github.nike.com/ngp"
     APP_PATH: "${WORKDIR}/cerberus-client-go"
