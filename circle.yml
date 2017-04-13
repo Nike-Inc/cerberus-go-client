@@ -1,0 +1,41 @@
+machine:
+  environment:
+    GOVERSION: "1.8.1"
+    GOPATH:  "${HOME}/.go_workspace"
+    WORKDIR: "${GOPATH}/src/github.nike.com/ngp"
+    APP_PATH: "${WORKDIR}/cerberus-client-go"
+    PROJECT_NAME: "cerberus-client-go"
+
+dependencies:
+
+  cache_directories:
+    - "~/.glide"
+
+  pre:
+    # remove old go files
+    - sudo rm -rf /usr/local/go
+    - rm -rf "$GOPATH"
+
+  override:
+    # install go
+    - wget "https://storage.googleapis.com/golang/go${GOVERSION}.linux-amd64.tar.gz" -O "${HOME}/go${GOVERSION}.tar.gz"
+    - sudo tar -C /usr/local -xzf "${HOME}/go${GOVERSION}.tar.gz"
+
+    # install glide
+    - sudo add-apt-repository ppa:masterminds/glide -y
+    - sudo apt-get update
+    - sudo apt-get install glide -y
+
+  post:
+    - go env
+
+test:
+  pre:
+    - mkdir -p "${WORKDIR}"
+    - ln -sf "$(pwd)" "${APP_PATH}"
+    # install dependencies
+    - cd "${APP_PATH}" && make bootstrap
+  override:
+    - cd "${APP_PATH}" && make test:
+        parallel: true
+
