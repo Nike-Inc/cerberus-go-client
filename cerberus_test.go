@@ -98,6 +98,15 @@ func TestSubclients(t *testing.T) {
 		Convey("Should return a valid Secret client", func() {
 			So(c.Secret(), ShouldNotBeNil)
 		})
+		Convey("Should return a valid Role client", func() {
+			So(c.Role(), ShouldNotBeNil)
+		})
+		Convey("Should return a valid Category client", func() {
+			So(c.Category(), ShouldNotBeNil)
+		})
+		Convey("Should return a valid Metadata client", func() {
+			So(c.Metadata(), ShouldNotBeNil)
+		})
 	})
 }
 
@@ -131,16 +140,23 @@ func TestParseResponse(t *testing.T) {
 	})
 }
 
-func WithServer(returnCode int, expectedPath, expectedMethod, bodyContains string, f func(ts *httptest.Server)) func() {
+func WithServer(returnCode int, shouldRefresh bool, expectedPath, expectedMethod, bodyContains string, expectedParams map[string]string, f func(ts *httptest.Server)) func() {
 	return func() {
 		Convey("http requests should be correct", func(c C) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				c.So(r.Method, ShouldEqual, expectedMethod)
 				c.So(r.URL.Path, ShouldStartWith, expectedPath)
+				// Make sure all expected params are there
+				for k, v := range expectedParams {
+					c.So(r.FormValue(k), ShouldEqual, v)
+				}
 				body, err := ioutil.ReadAll(r.Body)
 				c.So(err, ShouldBeNil)
 				c.So(string(body), ShouldContainSubstring, bodyContains)
 				w.Header().Set("Content-Type", "application/json")
+				if shouldRefresh {
+					w.Header().Set("X-Refresh-Token", "true")
+				}
 				w.WriteHeader(returnCode)
 				w.Write([]byte(`{"message": "a message"}`))
 			}))
@@ -154,17 +170,31 @@ func WithServer(returnCode int, expectedPath, expectedMethod, bodyContains strin
 }
 
 func TestDoRequest(t *testing.T) {
-	Convey("Valid GET request", t, WithServer(http.StatusOK, "/v1/blah", http.MethodGet, "", func(ts *httptest.Server) {
+	var testParams = map[string]string{
+		"theNumberThouShaltCountTo": "3",
+		"rightOut":                  "5",
+	}
+	Convey("Valid GET request", t, WithServer(http.StatusOK, false, "/v1/blah", http.MethodGet, "", map[string]string{}, func(ts *httptest.Server) {
 		cl, _ := NewClient(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil)
 		So(cl, ShouldNotBeNil)
 		Convey("Should return a valid response", func() {
-			resp, err := cl.DoRequest(http.MethodGet, "/v1/blah", nil)
+			resp, err := cl.DoRequest(http.MethodGet, "/v1/blah", map[string]string{}, nil)
 			So(err, ShouldBeNil)
 			So(resp.StatusCode, ShouldEqual, http.StatusOK)
 		})
 	}))
 
-	Convey("Valid POST request", t, WithServer(http.StatusOK, "/v1/books/armaments", http.MethodPost, "holy hand grenade of antioch", func(ts *httptest.Server) {
+	Convey("Valid request with params", t, WithServer(http.StatusOK, false, "/v1/blah", http.MethodGet, "", testParams, func(ts *httptest.Server) {
+		cl, _ := NewClient(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil)
+		So(cl, ShouldNotBeNil)
+		Convey("Should return a valid response", func() {
+			resp, err := cl.DoRequest(http.MethodGet, "/v1/blah", testParams, nil)
+			So(err, ShouldBeNil)
+			So(resp.StatusCode, ShouldEqual, http.StatusOK)
+		})
+	}))
+
+	Convey("Valid POST request", t, WithServer(http.StatusOK, true, "/v1/books/armaments", http.MethodPost, "holy hand grenade of antioch", map[string]string{}, func(ts *httptest.Server) {
 		cl, _ := NewClient(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil)
 		So(cl, ShouldNotBeNil)
 		var testData = map[string]string{
@@ -172,7 +202,21 @@ func TestDoRequest(t *testing.T) {
 			"weapon":    "holy hand grenade of antioch",
 		}
 		Convey("Should return a valid response", func() {
-			resp, err := cl.DoRequest(http.MethodPost, "/v1/books/armaments", testData)
+			resp, err := cl.DoRequest(http.MethodPost, "/v1/books/armaments", map[string]string{}, testData)
+			So(err, ShouldBeNil)
+			So(resp.StatusCode, ShouldEqual, http.StatusOK)
+		})
+	}))
+
+	Convey("Valid POST request with failed refresh", t, WithServer(http.StatusOK, true, "/v1/books/armaments", http.MethodPost, "holy hand grenade of antioch", map[string]string{}, func(ts *httptest.Server) {
+		cl, _ := NewClient(GenerateMockAuth(ts.URL, "a-cool-token", false, true), nil)
+		So(cl, ShouldNotBeNil)
+		var testData = map[string]string{
+			"character": "Brother Maynard",
+			"weapon":    "holy hand grenade of antioch",
+		}
+		Convey("Should still return a valid response", func() {
+			resp, err := cl.DoRequest(http.MethodPost, "/v1/books/armaments", map[string]string{}, testData)
 			So(err, ShouldBeNil)
 			So(resp.StatusCode, ShouldEqual, http.StatusOK)
 		})
@@ -182,9 +226,61 @@ func TestDoRequest(t *testing.T) {
 		cl, _ := NewClient(GenerateMockAuth("http://127.0.0.1:32876", "a-cool-token", false, false), nil)
 		So(cl, ShouldNotBeNil)
 		Convey("Should return an error", func() {
-			resp, err := cl.DoRequest(http.MethodGet, "/v1/blah", nil)
+			resp, err := cl.DoRequest(http.MethodGet, "/v1/blah", map[string]string{}, nil)
 			So(err, ShouldNotBeNil)
 			So(resp, ShouldBeNil)
+		})
+	})
+}
+
+func TestHandleAPIError(t *testing.T) {
+	Convey("Valid error body", t, func() {
+		buf := bytes.NewBuffer([]byte(`{
+	"error_id": "a041aa4d-1d5a-4eed-8e8a-6dc18bdf96db",
+	"errors": [{
+		"code": 99208,
+		"message": "The name may not be blank.",
+		"metadata": {
+			"field": "name"
+		}
+	}]
+}`))
+		expected := api.ErrorResponse{
+			ErrorID: "a041aa4d-1d5a-4eed-8e8a-6dc18bdf96db",
+			Errors: []api.ErrorDetail{
+				api.ErrorDetail{
+					Code:    99208,
+					Message: "The name may not be blank.",
+					Metadata: map[string]interface{}{
+						"field": "name",
+					},
+				},
+			},
+		}
+		err := handleAPIError(buf)
+		Convey("Should parse correctly", func() {
+			So(err, ShouldNotBeNil)
+			So(err, ShouldResemble, expected)
+		})
+	})
+	Convey("Empty body", t, func() {
+		buf := bytes.NewBuffer([]byte(""))
+		err := handleAPIError(buf)
+		Convey("Should have a normal error response", func() {
+			So(err, ShouldNotBeNil)
+			So(err, ShouldEqual, ErrorBodyNotReturned)
+		})
+	})
+	Convey("Invalid JSON object", t, func() {
+		buf := bytes.NewBuffer([]byte(`{
+			"id": 1,
+			"name": "weirdobj"
+		`))
+		err := handleAPIError(buf)
+		Convey("Should have a normal error response", func() {
+			So(err, ShouldNotBeNil)
+			So(err, ShouldNotHaveSameTypeAs, api.ErrorResponse{})
+			So(err, ShouldNotEqual, ErrorBodyNotReturned)
 		})
 	})
 }

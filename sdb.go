@@ -3,6 +3,7 @@ package cerberus
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"github.nike.com/ngp/cerberus-client-go/api"
 )
@@ -10,7 +11,7 @@ import (
 // ErrorSafeDepositBoxNotFound is returned when a specified deposit box is not found
 var ErrorSafeDepositBoxNotFound = fmt.Errorf("Unable to find Safe Deposit Box")
 
-var basePath = "/v1/safe-deposit-box"
+var sdbBasePath = "/v2/safe-deposit-box"
 
 // SDB is a client for managing and reading SafeDepositBox objects
 type SDB struct {
@@ -44,7 +45,7 @@ func (s *SDB) Get(id string) (*api.SafeDepositBox, error) {
 		return nil, ErrorSafeDepositBoxNotFound
 	}
 	returnedSDB := &api.SafeDepositBox{}
-	resp, err := s.c.DoRequest("GET", basePath+"/"+id, nil)
+	resp, err := s.c.DoRequest(http.MethodGet, sdbBasePath+"/"+id, map[string]string{}, nil)
 	if err != nil {
 		return nil, fmt.Errorf("Error while trying to get SDB: %v", err)
 	}
@@ -64,9 +65,9 @@ func (s *SDB) Get(id string) (*api.SafeDepositBox, error) {
 // List returns a list of all SDBs the authenticated user is allowed to see
 func (s *SDB) List() ([]*api.SafeDepositBox, error) {
 	sdbList := []*api.SafeDepositBox{}
-	resp, err := s.c.DoRequest("GET", basePath, nil)
+	resp, err := s.c.DoRequest(http.MethodGet, sdbBasePath, map[string]string{}, nil)
 	if err != nil {
-		return nil, fmt.Errorf("Error while trying to lidy SDB: %v", err)
+		return nil, fmt.Errorf("Error while trying to list SDB: %v", err)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("Error while trying to GET SDB list. Got HTTP status code %d", resp.StatusCode)
@@ -79,17 +80,88 @@ func (s *SDB) List() ([]*api.SafeDepositBox, error) {
 }
 
 // Create creates a new Safe Deposit Box and returns the newly created object
-func (s *SDB) Create(newSDB api.SafeDepositBox) (*api.SafeDepositBox, error) {
-	return nil, fmt.Errorf("Unimplemented")
+func (s *SDB) Create(newSDB *api.SafeDepositBox) (*api.SafeDepositBox, error) {
+	// Create the object we are returning
+	createdSDB := &api.SafeDepositBox{}
+	resp, err := s.c.DoRequest(http.MethodPost, sdbBasePath, map[string]string{}, newSDB)
+	if err != nil {
+		return nil, fmt.Errorf("Error while creating SDB: %v", err)
+	}
+	if resp.StatusCode == http.StatusBadRequest {
+		// Return the API error to the user
+		return nil, handleAPIError(resp.Body)
+	}
+	// If it isn't a bad request, make sure it is a good request and return an error if it isn't
+	if resp.StatusCode != http.StatusCreated {
+		apiErr := handleAPIError(resp.Body)
+		if apiErr == ErrorBodyNotReturned {
+			return nil, fmt.Errorf("Error while creating SDB. Got HTTP status code %d. %v", resp.StatusCode, apiErr)
+		}
+		return nil, apiErr
+	}
+	// Parse the created object
+	err = parseResponse(resp.Body, createdSDB)
+	if err != nil {
+		return nil, err
+	}
+	return createdSDB, nil
 }
 
 // Update updates an existing Safe Deposit Box. Any fields that are not null in the passed object
 // will overwrite any fields on the current object
-func (s *SDB) Update(id string, updatedSDB api.SafeDepositBox) (*api.SafeDepositBox, error) {
-	return nil, fmt.Errorf("Unimplemented")
+func (s *SDB) Update(id string, updatedSDB *api.SafeDepositBox) (*api.SafeDepositBox, error) {
+	id = strings.TrimSpace(id)
+	// Check to make sure the ID isn't empty
+	if id == "" {
+		return nil, ErrorSafeDepositBoxNotFound
+	}
+	returnedSDB := &api.SafeDepositBox{}
+	resp, err := s.c.DoRequest(http.MethodPut, sdbBasePath+"/"+id, map[string]string{}, updatedSDB)
+	if err != nil {
+		return nil, fmt.Errorf("Error while updating SDB: %v", err)
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, ErrorSafeDepositBoxNotFound
+	}
+	if resp.StatusCode == http.StatusBadRequest {
+		// Return the API error to the user
+		return nil, handleAPIError(resp.Body)
+	}
+	if resp.StatusCode != http.StatusOK {
+		apiErr := handleAPIError(resp.Body)
+		if apiErr == ErrorBodyNotReturned {
+			return nil, fmt.Errorf("Error while updating SDB. Got HTTP status code %d. %v", resp.StatusCode, apiErr)
+		}
+		return nil, apiErr
+	}
+	// Parse the updated object
+	err = parseResponse(resp.Body, returnedSDB)
+	if err != nil {
+		return nil, err
+	}
+	return returnedSDB, nil
 }
 
 // Delete deletes the Safe Deposit Box with the given ID
 func (s *SDB) Delete(id string) error {
-	return fmt.Errorf("Unimplemented")
+	id = strings.TrimSpace(id)
+	// Check to make sure the ID isn't empty
+	if id == "" {
+		return ErrorSafeDepositBoxNotFound
+	}
+	resp, err := s.c.DoRequest(http.MethodDelete, sdbBasePath+"/"+id, map[string]string{}, nil)
+	if err != nil {
+		return fmt.Errorf("Error while deleting SDB: %v", err)
+	}
+	if resp.StatusCode == http.StatusNotFound {
+		return ErrorSafeDepositBoxNotFound
+	}
+	if resp.StatusCode != http.StatusOK {
+		apiErr := handleAPIError(resp.Body)
+		if apiErr == ErrorBodyNotReturned {
+			return fmt.Errorf("Error while deleting SDB. Got HTTP status code %d. %v", resp.StatusCode, apiErr)
+		}
+		return apiErr
+	}
+	return nil
 }

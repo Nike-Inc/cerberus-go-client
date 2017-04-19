@@ -5,6 +5,11 @@
 // for full documentation
 package api
 
+import (
+	"fmt"
+	"time"
+)
+
 // AuthStatus is the status of a UserAuthResponse
 type AuthStatus string
 
@@ -15,6 +20,29 @@ var (
 	// but an MFA token is required
 	AuthUserNeedsMFA AuthStatus = "mfa_req"
 )
+
+// ErrorUnauthenticated is used when a user tries to Refresh or Logout without already being authenticated
+var ErrorUnauthenticated = fmt.Errorf("Unable to complete request: Not Authenticated")
+
+// ErrorUnauthorized is returned when the request fails because of invalid credentials
+var ErrorUnauthorized = fmt.Errorf("Invalid credentials given")
+
+// ErrorResponse represents an error response from the API
+type ErrorResponse struct {
+	ErrorID string `json:"error_id"`
+	Errors  []ErrorDetail
+}
+
+// ErrorDetail is a specific error description for a given issue. There may be many of these returned with an ErrorResponse
+type ErrorDetail struct {
+	Code     int
+	Message  string
+	Metadata map[string]interface{} // Most of the time it is just a string => string. But the error definition states this as an "Object" in Java, so it could be anything
+}
+
+func (e ErrorResponse) Error() string {
+	return fmt.Sprintf("Error from API. ID: %s, Details: %+v", e.ErrorID, e.Errors)
+}
 
 // UserAuthResponse represents the response from the /v2/auth/user
 type UserAuthResponse struct {
@@ -74,8 +102,54 @@ type UserGroupPermission struct {
 
 // IAMRole represents an IAM permission on an object
 type IAMRole struct {
-	ID        string
-	AccountID string `json:"account_id"`
-	Name      string `json:"iam_role_name"`
-	RoleID    string `json:"role_id"`
+	ID              string
+	IAMPrincipalARN string `json:"iam_principal_arn"`
+	RoleID          string `json:"role_id"`
+}
+
+// Role represents a role that can be assigned to a safe deposit box
+type Role struct {
+	ID            string
+	Name          string
+	Created       time.Time `json:"created_ts"`
+	LastUpdated   time.Time `json:"last_updated_ts"`
+	CreatedBy     string    `json:"created_by"`
+	LastUpdatedBy string    `json:"last_updated_by"`
+}
+
+// Category represents a category that can be assigned to a safe deposit box
+type Category struct {
+	ID            string
+	DisplayName   string `json:"display_name"`
+	Path          string
+	Created       time.Time `json:"created_ts"`
+	LastUpdated   time.Time `json:"last_updated_ts"`
+	CreatedBy     string    `json:"created_by"`
+	LastUpdatedBy string    `json:"last_updated_by"`
+}
+
+// MetadataResponse is an object that wraps a list of SDBMetadata for convenience with pagination
+type MetadataResponse struct {
+	HasNext     bool `json:"has_next"`
+	NextOffset  int  `json:"next_offset"`
+	Limit       int
+	Offset      int
+	ResultCount int           `json:"sdb_count_in_result"`
+	TotalCount  int           `json:"total_sdbcount"`
+	Metadata    []SDBMetadata `json:"safe_deposit_box_metadata"`
+}
+
+// SDBMetadata represents the metadata of a specific SDB
+type SDBMetadata struct {
+	Name                 string
+	Path                 string
+	Category             string
+	Owner                string
+	Description          string
+	Created              time.Time         `json:"created_ts"`
+	CreatedBy            string            `json:"created_by"`
+	LastUpdated          time.Time         `json:"last_updated_ts"`
+	LastUpdatedBy        string            `json:"last_updated_by"`
+	UserGroupPermissions map[string]string `json:"user_group_permissions"`
+	IAMRolePermissions   map[string]string `json:"iam_role_permissions"`
 }

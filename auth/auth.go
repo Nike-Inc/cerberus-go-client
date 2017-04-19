@@ -8,13 +8,10 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+
+	"github.nike.com/ngp/cerberus-client-go/api"
+	"github.nike.com/ngp/cerberus-client-go/utils"
 )
-
-// ErrorUnauthenticated is used when a user tries to Refresh or Logout without already being authenticated
-var ErrorUnauthenticated = fmt.Errorf("Unable to complete request: Not Authenticated")
-
-// ErrorUnauthorized is returned when the request fails because of invalid credentials
-var ErrorUnauthorized = fmt.Errorf("Invalid credentials given")
 
 // The Auth interface describes the methods that all authentication providers must satisfy
 type Auth interface {
@@ -34,4 +31,42 @@ type Auth interface {
 	// the authorization header set with the proper token
 	GetHeaders() (http.Header, error)
 	GetURL() *url.URL
+}
+
+// Refresh contains logic for refreshing a token against the API. Because
+// all tokens can be refreshed this way, it is better to keep this in one place
+func Refresh(builtURL url.URL, headers http.Header) (*api.UserAuthResponse, error) {
+	builtURL.Path = "/v2/auth/user/refresh"
+	req, err := http.NewRequest("GET", builtURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = headers
+	resp, err := (&http.Client{}).Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("Problem while performing request to Cerberus: %v", err)
+	}
+	r, checkErr := utils.CheckAndParse(resp)
+	if checkErr != nil {
+		return nil, checkErr
+	}
+	return r, nil
+}
+
+// Logout takes a set of headers containing a vault token and a URL and logs out of Cerberus.
+func Logout(builtURL url.URL, headers http.Header) error {
+	builtURL.Path = "/v1/auth"
+	req, err := http.NewRequest("DELETE", builtURL.String(), nil)
+	if err != nil {
+		return err
+	}
+	req.Header = headers
+	resp, err := (&http.Client{}).Do(req)
+	if err != nil {
+		return fmt.Errorf("Problem while performing request to Cerberus: %v", err)
+	}
+	if resp.StatusCode != http.StatusNoContent {
+		return fmt.Errorf("Unable to log out. Got HTTP response code %d", resp.StatusCode)
+	}
+	return nil
 }
