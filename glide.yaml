@@ -1,4 +1,4 @@
-package: github.nike.com/ngp/cerberus-client-go
+package: github.com/Nike-Inc/cerberus-go-client
 import:
 - package: github.com/hashicorp/vault
   version: ~0.7.0

@@ -9,8 +9,8 @@ import (
 	"os"
 	"time"
 
-	"github.nike.com/ngp/cerberus-client-go/api"
-	"github.nike.com/ngp/cerberus-client-go/utils"
+	"github.com/Nike-Inc/cerberus-go-client/api"
+	"github.com/Nike-Inc/cerberus-go-client/utils"
 )
 
 // AWSAuth uses AWS roles and authentication to authenticate to Cerberus

@@ -12,7 +12,7 @@ import (
 	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"github.nike.com/ngp/cerberus-client-go/api"
+	"github.com/Nike-Inc/cerberus-go-client/api"
 )
 
 var validLogin = `{

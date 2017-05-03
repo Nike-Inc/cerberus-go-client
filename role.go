@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.nike.com/ngp/cerberus-client-go/api"
+	"github.com/Nike-Inc/cerberus-go-client/api"
 )
 
 // Role is a subclient for accessing the roles endpoint

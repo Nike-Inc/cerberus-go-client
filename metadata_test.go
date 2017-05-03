@@ -7,7 +7,7 @@ import (
 	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"github.nike.com/ngp/cerberus-client-go/api"
+	"github.com/Nike-Inc/cerberus-go-client/api"
 )
 
 var metadataTime, _ = time.Parse(time.RFC3339, "2017-01-04T23:18:40-08:00")

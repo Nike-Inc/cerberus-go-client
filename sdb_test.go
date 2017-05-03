@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
-	"github.nike.com/ngp/cerberus-client-go/api"
+	"github.com/Nike-Inc/cerberus-go-client/api"
 )
 
 func WithTestServer(returnCode int, expectedPath, expectedMethod, body string, f func(ts *httptest.Server)) func() {

@@ -9,8 +9,8 @@ import (
 	"net/url"
 	"os"
 
-	"github.nike.com/ngp/cerberus-client-go/api"
-	"github.nike.com/ngp/cerberus-client-go/utils"
+	"github.com/Nike-Inc/cerberus-go-client/api"
+	"github.com/Nike-Inc/cerberus-go-client/utils"
 )
 
 // The Auth interface describes the methods that all authentication providers must satisfy

@@ -12,8 +12,8 @@ import (
 	"io/ioutil"
 
 	vault "github.com/hashicorp/vault/api"
-	"github.nike.com/ngp/cerberus-client-go/api"
-	"github.nike.com/ngp/cerberus-client-go/auth"
+	"github.com/Nike-Inc/cerberus-go-client/api"
+	"github.com/Nike-Inc/cerberus-go-client/auth"
 )
 
 // Client is the main client for interacting with Cerberus
