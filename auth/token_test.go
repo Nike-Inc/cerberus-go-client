@@ -6,9 +6,8 @@ import (
 	"os"
 	"testing"
 
-	"github.nike.com/ngp/cerberus-client-go/api"
-
 	. "github.com/smartystreets/goconvey/convey"
+	"github.nike.com/ngp/cerberus-client-go/api"
 )
 
 func TestNewTokenAuth(t *testing.T) {

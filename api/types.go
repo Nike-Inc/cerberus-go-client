@@ -44,6 +44,24 @@ func (e ErrorResponse) Error() string {
 	return fmt.Sprintf("Error from API. ID: %s, Details: %+v", e.ErrorID, e.Errors)
 }
 
+// IAMAuthResponse represents a response from the iam-principal authentication endpoint
+type IAMAuthResponse struct {
+	Token     string `json:"client_token"`
+	Policies  []string
+	Metadata  AWSMetadata
+	Duration  int `json:"lease_duration"`
+	Renewable bool
+}
+
+// AWSMetadata contains additional information about the ARN that was used to log in
+type AWSMetadata struct {
+	Region       string `json:"aws_region"`
+	PrincipalARN string `json:"iam_principal_arn"`
+	Username     string
+	IsAdmin      string `json:"is_admin"` // This is returned as a string from the API
+	Groups       string
+}
+
 // UserAuthResponse represents the response from the /v2/auth/user
 type UserAuthResponse struct {
 	Status AuthStatus
