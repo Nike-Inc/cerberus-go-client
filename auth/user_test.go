@@ -3,15 +3,13 @@ package auth
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
-
-	"io"
-
-	"os"
 
 	. "github.com/smartystreets/goconvey/convey"
 	"github.nike.com/ngp/cerberus-client-go/api"
@@ -74,6 +72,11 @@ func TestNewUserAuth(t *testing.T) {
 			So(c, ShouldBeNil)
 			So(err, ShouldNotBeNil)
 		})
+		Convey("should error with invalid URL", func() {
+			c, err := NewUserAuth("https://test.example.com/a/path", "user", "password")
+			So(c, ShouldBeNil)
+			So(err, ShouldNotBeNil)
+		})
 	})
 
 	Convey("Valid NewUserAuth", t, func() {
@@ -83,6 +86,21 @@ func TestNewUserAuth(t *testing.T) {
 		})
 		Convey("Should have a valid client", func() {
 			So(c, ShouldNotBeNil)
+		})
+	})
+
+	Convey("Cerberus URL set by environment variable", t, func() {
+		os.Setenv("CERBERUS_URL", "https://test.example.com")
+		tok, err := NewUserAuth("", "user", "password")
+		Convey("Should return a valid UserAuth", func() {
+			So(err, ShouldBeNil)
+			So(tok, ShouldNotBeNil)
+			Convey("And should set the URL", func() {
+				So(tok.baseURL.String(), ShouldEqual, "https://test.example.com")
+			})
+		})
+		Reset(func() {
+			os.Unsetenv("CERBERUS_URL")
 		})
 	})
 }
@@ -122,7 +140,7 @@ func WithServer(status api.AuthStatus, returnCode int, token, expectedPath, expe
 }
 
 // This by extension will test the `authenticate` and `checkAndParse` methods
-func TestGetToken(t *testing.T) {
+func TestGetTokenUser(t *testing.T) {
 	var token = "7f6808f1-ede3-2177-aa9d-45f507391310"
 	Convey("GetToken with valid credentials", t, WithServer(api.AuthUserSuccess, http.StatusOK, token, "/v2/auth/user", http.MethodGet, map[string]string{}, func(ts *httptest.Server) {
 		c, _ := NewUserAuth(ts.URL, "user", "password")
@@ -146,7 +164,7 @@ func TestGetToken(t *testing.T) {
 		Convey("Should return an error", func() {
 			t, err := c.GetToken(nil)
 			So(err, ShouldNotBeNil)
-			So(err, ShouldEqual, ErrorUnauthorized)
+			So(err, ShouldEqual, api.ErrorUnauthorized)
 			So(t, ShouldBeEmpty)
 		})
 	}))
@@ -231,7 +249,7 @@ func TestGetToken(t *testing.T) {
 	})
 }
 
-func TestRefresh(t *testing.T) {
+func TestRefreshUser(t *testing.T) {
 	var token = "a-new-token"
 	Convey("Refreshing a token", t, WithServer(api.AuthUserSuccess, http.StatusOK, token, "/v2/auth/user/refresh", http.MethodGet, map[string]string{"X-Vault-Token": "an-old-token"}, func(ts *httptest.Server) {
 		c, _ := NewUserAuth(ts.URL, "user", "password")
@@ -255,7 +273,7 @@ func TestRefresh(t *testing.T) {
 		So(c, ShouldNotBeNil)
 		Convey("Should error", func() {
 			err := c.Refresh()
-			So(err, ShouldEqual, ErrorUnauthenticated)
+			So(err, ShouldEqual, api.ErrorUnauthenticated)
 		})
 	})
 	Convey("Refreshing with an expired token", t, func() {
@@ -265,7 +283,7 @@ func TestRefresh(t *testing.T) {
 		c.expiry = time.Now().Add(-2 * time.Minute)
 		Convey("Should error", func() {
 			err := c.Refresh()
-			So(err, ShouldEqual, ErrorUnauthenticated)
+			So(err, ShouldEqual, api.ErrorUnauthenticated)
 		})
 	})
 
@@ -289,7 +307,7 @@ func TestGetHeaders(t *testing.T) {
 		So(c, ShouldNotBeNil)
 		Convey("Should error", func() {
 			_, err := c.GetHeaders()
-			So(err, ShouldEqual, ErrorUnauthenticated)
+			So(err, ShouldEqual, api.ErrorUnauthenticated)
 		})
 	})
 
@@ -307,13 +325,13 @@ func TestGetHeaders(t *testing.T) {
 	})
 }
 
-func TestLogout(t *testing.T) {
+func TestLogoutUser(t *testing.T) {
 	Convey("Logging out when not authenticated", t, func() {
 		c, _ := NewUserAuth("http://example.com", "user", "password")
 		So(c, ShouldNotBeNil)
 		Convey("Should error", func() {
 			err := c.Logout()
-			So(err, ShouldEqual, ErrorUnauthenticated)
+			So(err, ShouldEqual, api.ErrorUnauthenticated)
 		})
 	})
 

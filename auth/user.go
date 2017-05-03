@@ -87,23 +87,12 @@ func (u *UserAuth) IsAuthenticated() bool {
 // ErrorUnauthenticated if not already authenticated
 func (u *UserAuth) Refresh() error {
 	if !u.IsAuthenticated() {
-		return ErrorUnauthenticated
+		return api.ErrorUnauthenticated
 	}
-	// Make a copy of the base URL
-	builtURL := *u.baseURL
-	builtURL.Path = "/v2/auth/user/refresh"
-	req, err := http.NewRequest("GET", builtURL.String(), nil)
+	// Pass a copy of the base URL
+	r, err := Refresh(*u.baseURL, u.headers)
 	if err != nil {
 		return err
-	}
-	req.Header = u.headers
-	resp, err := u.client.Do(req)
-	if err != nil {
-		return fmt.Errorf("Problem while performing request to Cerberus: %v", err)
-	}
-	r, checkErr := checkAndParse(resp)
-	if checkErr != nil {
-		return checkErr
 	}
 	u.setToken(r.Data.ClientToken.ClientToken, r.Data.ClientToken.Duration)
 	return nil
@@ -113,22 +102,11 @@ func (u *UserAuth) Refresh() error {
 // not already authenticated
 func (u *UserAuth) Logout() error {
 	if !u.IsAuthenticated() {
-		return ErrorUnauthenticated
+		return api.ErrorUnauthenticated
 	}
-	// Make a copy of the base URL
-	builtURL := *u.baseURL
-	builtURL.Path = "/v1/auth"
-	req, err := http.NewRequest("DELETE", builtURL.String(), nil)
-	if err != nil {
+	// Use a copy of the base URL
+	if err := Logout(*u.baseURL, u.headers); err != nil {
 		return err
-	}
-	req.Header = u.headers
-	resp, err := u.client.Do(req)
-	if err != nil {
-		return fmt.Errorf("Problem while performing request to Cerberus: %v", err)
-	}
-	if resp.StatusCode != http.StatusNoContent {
-		return fmt.Errorf("Unable to log out. Got HTTP response code %d", resp.StatusCode)
 	}
 	// Reset the token and header
 	u.token = ""
@@ -141,7 +119,7 @@ func (u *UserAuth) Logout() error {
 // the authorization header set with the proper token
 func (u *UserAuth) GetHeaders() (http.Header, error) {
 	if !u.IsAuthenticated() {
-		return nil, ErrorUnauthenticated
+		return nil, api.ErrorUnauthenticated
 	}
 	return u.headers, nil
 }
@@ -163,7 +141,7 @@ func (u *UserAuth) authenticate(f *os.File) error {
 	if err != nil {
 		return fmt.Errorf("Problem while performing request to Cerberus: %v", err)
 	}
-	r, checkErr := checkAndParse(resp)
+	r, checkErr := utils.CheckAndParse(resp)
 	if checkErr != nil {
 		return checkErr
 	}
@@ -212,7 +190,7 @@ func (u *UserAuth) doMFA(stateToken, deviceID string, readFrom *os.File) error {
 	if err != nil {
 		return fmt.Errorf("Problem while performing request to Cerberus: %v", err)
 	}
-	r, checkErr := checkAndParse(resp)
+	r, checkErr := utils.CheckAndParse(resp)
 	if checkErr != nil {
 		return checkErr
 	}
@@ -227,21 +205,4 @@ func (u *UserAuth) setToken(token string, duration int) {
 	// Set the auth header up to make things easier
 	u.headers.Set("X-Vault-Token", token)
 	u.expiry = time.Now().Add(time.Duration(duration) * time.Second)
-}
-
-// Helper function to check for errors and parse a response. It will return a user friendly error
-func checkAndParse(resp *http.Response) (*api.UserAuthResponse, error) {
-	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-		return nil, ErrorUnauthorized
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("Error while trying to authenticate. Got HTTP response code %d", resp.StatusCode)
-	}
-	decoder := json.NewDecoder(resp.Body)
-	u := &api.UserAuthResponse{}
-	err := decoder.Decode(u)
-	if err != nil {
-		return nil, fmt.Errorf("Error while trying to parse response from Cerberus: %v", err)
-	}
-	return u, nil
 }
