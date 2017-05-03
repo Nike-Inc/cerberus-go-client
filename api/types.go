@@ -101,12 +101,12 @@ type UserMetadata struct {
 
 // SafeDepositBox represents a safe deposit box API object
 type SafeDepositBox struct {
-	ID                   string                `json:",omitempty"`
-	Name                 string                `json:",omitempty"`
-	Path                 string                `json:",omitempty"`
+	ID                   string                `json:"id,omitempty"`
+	Name                 string                `json:"name,omitempty"`
+	Path                 string                `json:"path,omitempty"`
 	CategoryID           string                `json:"category_id,omitempty"`
-	Description          string                `json:",omitempty"`
-	Owner                string                `json:",omitempty"`
+	Description          string                `json:"description,omitempty"`
+	Owner                string                `json:"owner,omitempty"`
 	UserGroupPermissions []UserGroupPermission `json:"user_group_permissions,omitempty"`
 	IAMRolePermissions   []IAMRole             `json:"iam_role_permissions,omitempty"`
 }

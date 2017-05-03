@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"os"
 
+	"io/ioutil"
+
 	vault "github.com/hashicorp/vault/api"
 	"github.nike.com/ngp/cerberus-client-go/api"
 	"github.nike.com/ngp/cerberus-client-go/auth"
@@ -110,6 +112,9 @@ func (c *Client) DoRequest(method, path string, params map[string]string, data i
 		if err != nil {
 			return nil, err
 		}
+		thing, _ := ioutil.ReadAll(body)
+		fmt.Println(string(thing))
+		body = bytes.NewBuffer(thing)
 		req, err = http.NewRequest(method, baseURL.String(), body)
 	}
 
