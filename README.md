@@ -1,5 +1,6 @@
 # Cerberus Go Client
-A Golang client for accessing Cerberus
+A Golang client for accessing Cerberus. To learn more about Cerberus, please visit
+the [Cerberus Website](http://engineering.nike.com/cerberus/)
 
 ## Usage
 

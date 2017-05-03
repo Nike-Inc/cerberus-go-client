@@ -68,7 +68,10 @@ func NewAWSAuth(cerberusURL, roleARN, region string) (*AWSAuth, error) {
 		region:  region,
 		roleARN: roleARN,
 		baseURL: parsedURL,
-		headers: http.Header{},
+		headers: http.Header{
+			"X-Cerberus-Client": []string{api.ClientHeader},
+			"Content-Type":      []string{"application/json"},
+		},
 	}, nil
 }
 
@@ -96,7 +99,14 @@ func (a *AWSAuth) GetToken(f *os.File) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	resp, err := http.Post(builtURL.String(), "application/json", body)
+	req, err := http.NewRequest("POST", builtURL.String(), body)
+	if err != nil {
+		return "", fmt.Errorf("Problem while performing request to Cerberus: %v", err)
+	}
+	req.Header = a.headers
+	cl := http.Client{}
+
+	resp, err := cl.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("Problem while performing request to Cerberus: %v", err)
 	}
