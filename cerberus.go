@@ -25,11 +25,9 @@ import (
 	"net/url"
 	"os"
 
-	"io/ioutil"
-
-	vault "github.com/hashicorp/vault/api"
 	"github.com/Nike-Inc/cerberus-go-client/api"
 	"github.com/Nike-Inc/cerberus-go-client/auth"
+	vault "github.com/hashicorp/vault/api"
 )
 
 // Client is the main client for interacting with Cerberus
@@ -128,9 +126,6 @@ func (c *Client) DoRequest(method, path string, params map[string]string, data i
 		if err != nil {
 			return nil, err
 		}
-		thing, _ := ioutil.ReadAll(body)
-		fmt.Println(string(thing))
-		body = bytes.NewBuffer(thing)
 		req, err = http.NewRequest(method, baseURL.String(), body)
 	}
 

@@ -23,8 +23,8 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/Nike-Inc/cerberus-go-client/api"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 var awsResponseBody = `{
@@ -99,7 +99,9 @@ func TestNewAWSAuth(t *testing.T) {
 }
 
 func TestGetTokenAWS(t *testing.T) {
-	Convey("A valid AWSAuth", t, TestingServer(http.StatusOK, "/v2/auth/iam-principal", http.MethodPost, awsResponseBody, map[string]string{}, func(ts *httptest.Server) {
+	Convey("A valid AWSAuth", t, TestingServer(http.StatusOK, "/v2/auth/iam-principal", http.MethodPost, awsResponseBody, map[string]string{
+		"X-Cerberus-Client": api.ClientHeader,
+	}, func(ts *httptest.Server) {
 		a, err := NewAWSAuth(ts.URL, "han-solo", "falcon")
 		So(err, ShouldBeNil)
 		So(a, ShouldNotBeNil)
@@ -143,28 +145,6 @@ func TestGetTokenAWS(t *testing.T) {
 			So(tok, ShouldBeEmpty)
 		})
 	}))
-	// Convey("A valid TokenAuth", t, func() {
-	// 	tok, err := NewTokenAuth("https://test.example.com", "rey")
-	// 	So(err, ShouldBeNil)
-	// 	So(tok, ShouldNotBeNil)
-	// 	Convey("Should return a valid token", func() {
-	// 		token, err := tok.GetToken(nil)
-	// 		So(err, ShouldBeNil)
-	// 		So(token, ShouldEqual, "rey")
-	// 	})
-	// })
-
-	// Convey("A logged out TokenAuth", t, func() {
-	// 	tok, err := NewTokenAuth("https://test.example.com", "rey")
-	// 	So(err, ShouldBeNil)
-	// 	So(tok, ShouldNotBeNil)
-	// 	tok.token = ""
-	// 	Convey("Should return an error when getting token", func() {
-	// 		token, err := tok.GetToken(nil)
-	// 		So(err, ShouldEqual, api.ErrorUnauthenticated)
-	// 		So(token, ShouldBeEmpty)
-	// 	})
-	// })
 }
 
 func TestIsAuthenticatedAWS(t *testing.T) {
@@ -192,11 +172,13 @@ func TestIsAuthenticatedAWS(t *testing.T) {
 func TestRefreshAWS(t *testing.T) {
 	var testToken = "leia"
 	var expectedHeaders = map[string]string{
-		"X-Vault-Token": testToken,
+		"X-Vault-Token":     testToken,
+		"X-Cerberus-Client": api.ClientHeader,
 	}
 	Convey("A valid AWSAuth", t, TestingServer(http.StatusOK, "/v2/auth/user/refresh", http.MethodGet, authResponseBody, expectedHeaders, func(ts *httptest.Server) {
 		testHeaders := http.Header{}
 		testHeaders.Add("X-Vault-Token", testToken)
+		testHeaders.Add("X-Cerberus-Client", api.ClientHeader)
 		a, err := NewAWSAuth(ts.URL, "han-solo", "falcon")
 		So(err, ShouldBeNil)
 		So(a, ShouldNotBeNil)
@@ -216,6 +198,7 @@ func TestRefreshAWS(t *testing.T) {
 	Convey("A valid AWSAuth", t, TestingServer(http.StatusInternalServerError, "/v2/auth/user/refresh", http.MethodGet, "", expectedHeaders, func(ts *httptest.Server) {
 		testHeaders := http.Header{}
 		testHeaders.Add("X-Vault-Token", testToken)
+		testHeaders.Add("X-Cerberus-Client", api.ClientHeader)
 		a, err := NewAWSAuth(ts.URL, "jabba", "hutt")
 		So(err, ShouldBeNil)
 		So(a, ShouldNotBeNil)
@@ -241,11 +224,13 @@ func TestRefreshAWS(t *testing.T) {
 func TestLogoutAWS(t *testing.T) {
 	var testToken = "c3po"
 	var expectedHeaders = map[string]string{
-		"X-Vault-Token": testToken,
+		"X-Vault-Token":     testToken,
+		"X-Cerberus-Client": api.ClientHeader,
 	}
 	Convey("A valid AWSAuth", t, TestingServer(http.StatusNoContent, "/v1/auth", http.MethodDelete, "", expectedHeaders, func(ts *httptest.Server) {
 		testHeaders := http.Header{}
 		testHeaders.Add("X-Vault-Token", testToken)
+		testHeaders.Add("X-Cerberus-Client", api.ClientHeader)
 		a, err := NewAWSAuth(ts.URL, "chewie", "rancor")
 		So(err, ShouldBeNil)
 		So(a, ShouldNotBeNil)
@@ -264,6 +249,7 @@ func TestLogoutAWS(t *testing.T) {
 	Convey("A valid AWSAuth", t, TestingServer(http.StatusInternalServerError, "/v1/auth", http.MethodDelete, "", expectedHeaders, func(ts *httptest.Server) {
 		testHeaders := http.Header{}
 		testHeaders.Add("X-Vault-Token", testToken)
+		testHeaders.Add("X-Cerberus-Client", api.ClientHeader)
 		a, err := NewAWSAuth(ts.URL, "chewie", "rancor")
 		So(err, ShouldBeNil)
 		So(a, ShouldNotBeNil)

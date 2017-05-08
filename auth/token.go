@@ -60,7 +60,9 @@ func NewTokenAuth(cerberusURL, token string) (*TokenAuth, error) {
 	if err != nil {
 		return nil, err
 	}
-	var headers = http.Header{}
+	var headers = http.Header{
+		"X-Cerberus-Client": []string{api.ClientHeader},
+	}
 	headers.Set("Content-Type", "application/json")
 	headers.Set("Accept", "application/json")
 	headers.Set("X-Vault-Token", token)

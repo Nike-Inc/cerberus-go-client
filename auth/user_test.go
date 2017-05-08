@@ -27,8 +27,8 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/Nike-Inc/cerberus-go-client/api"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 var validLogin = `{
@@ -158,7 +158,9 @@ func WithServer(status api.AuthStatus, returnCode int, token, expectedPath, expe
 // This by extension will test the `authenticate` and `checkAndParse` methods
 func TestGetTokenUser(t *testing.T) {
 	var token = "7f6808f1-ede3-2177-aa9d-45f507391310"
-	Convey("GetToken with valid credentials", t, WithServer(api.AuthUserSuccess, http.StatusOK, token, "/v2/auth/user", http.MethodGet, map[string]string{}, func(ts *httptest.Server) {
+	Convey("GetToken with valid credentials", t, WithServer(api.AuthUserSuccess, http.StatusOK, token, "/v2/auth/user", http.MethodGet, map[string]string{
+		"X-Cerberus-Client": api.ClientHeader,
+	}, func(ts *httptest.Server) {
 		c, _ := NewUserAuth(ts.URL, "user", "password")
 		So(c, ShouldNotBeNil)
 		Convey("Should return a valid token", func() {
@@ -267,7 +269,7 @@ func TestGetTokenUser(t *testing.T) {
 
 func TestRefreshUser(t *testing.T) {
 	var token = "a-new-token"
-	Convey("Refreshing a token", t, WithServer(api.AuthUserSuccess, http.StatusOK, token, "/v2/auth/user/refresh", http.MethodGet, map[string]string{"X-Vault-Token": "an-old-token"}, func(ts *httptest.Server) {
+	Convey("Refreshing a token", t, WithServer(api.AuthUserSuccess, http.StatusOK, token, "/v2/auth/user/refresh", http.MethodGet, map[string]string{"X-Vault-Token": "an-old-token", "X-Cerberus-Client": api.ClientHeader}, func(ts *httptest.Server) {
 		c, _ := NewUserAuth(ts.URL, "user", "password")
 		So(c, ShouldNotBeNil)
 		c.setToken("an-old-token", 3600)
@@ -337,6 +339,7 @@ func TestGetHeaders(t *testing.T) {
 		})
 		Convey("Should contain X-Vault-Token", func() {
 			So(headers.Get("X-Vault-Token"), ShouldEqual, "an-old-token")
+			So(headers.Get("X-Cerberus-Client"), ShouldEqual, api.ClientHeader)
 		})
 	})
 }

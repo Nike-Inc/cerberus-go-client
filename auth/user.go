@@ -68,7 +68,8 @@ func NewUserAuth(cerberusURL, username, password string) (*UserAuth, error) {
 		password: password,
 		baseURL:  parsedURL,
 		headers: http.Header{
-			"Content-Type": []string{"application/json"},
+			"Content-Type":      []string{"application/json"},
+			"X-Cerberus-Client": []string{api.ClientHeader},
 		},
 		client: &http.Client{},
 	}, nil
@@ -143,7 +144,8 @@ func (u *UserAuth) GetHeaders() (http.Header, error) {
 func (u *UserAuth) authenticate(f *os.File) error {
 	encodedCreds := base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", u.username, u.password)))
 	headers := http.Header{
-		"Authorization": []string{fmt.Sprintf("Basic %s", encodedCreds)},
+		"Authorization":     []string{fmt.Sprintf("Basic %s", encodedCreds)},
+		"X-Cerberus-Client": []string{api.ClientHeader},
 	}
 	// Make a copy of the base URL
 	builtURL := *u.baseURL

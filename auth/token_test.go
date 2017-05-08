@@ -22,8 +22,8 @@ import (
 	"os"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/Nike-Inc/cerberus-go-client/api"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestNewTokenAuth(t *testing.T) {
@@ -145,10 +145,12 @@ func TestIsAuthenticatedToken(t *testing.T) {
 func TestRefreshToken(t *testing.T) {
 	var testToken = "finn"
 	var expectedHeaders = map[string]string{
-		"X-Vault-Token": testToken,
+		"X-Vault-Token":     testToken,
+		"X-Cerberus-Client": api.ClientHeader,
 	}
 	testHeaders := http.Header{}
 	testHeaders.Add("X-Vault-Token", testToken)
+	testHeaders.Add("X-Cerberus-Client", api.ClientHeader)
 	Convey("A valid TokenAuth", t, TestingServer(http.StatusOK, "/v2/auth/user/refresh", http.MethodGet, authResponseBody, expectedHeaders, func(ts *httptest.Server) {
 		tok, err := NewTokenAuth(ts.URL, testToken)
 		So(err, ShouldBeNil)
@@ -185,10 +187,12 @@ func TestRefreshToken(t *testing.T) {
 func TestLogoutToken(t *testing.T) {
 	var testToken = "bb-8"
 	var expectedHeaders = map[string]string{
-		"X-Vault-Token": testToken,
+		"X-Vault-Token":     testToken,
+		"X-Cerberus-Client": api.ClientHeader,
 	}
 	testHeaders := http.Header{}
 	testHeaders.Add("X-Vault-Token", testToken)
+	testHeaders.Add("X-Cerberus-Client", api.ClientHeader)
 	Convey("A valid TokenAuth", t, TestingServer(http.StatusNoContent, "/v1/auth", http.MethodDelete, "", expectedHeaders, func(ts *httptest.Server) {
 		tok, err := NewTokenAuth(ts.URL, testToken)
 		So(err, ShouldBeNil)
