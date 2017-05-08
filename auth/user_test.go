@@ -168,7 +168,7 @@ func TestGetTokenUser(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(t, ShouldEqual, token)
 			Convey("And should have a valid expiry time", func() {
-				So(c.expiry, ShouldHappenOnOrBefore, time.Now().Add(3600*time.Second))
+				So(c.expiry, ShouldHappenOnOrBefore, time.Now().Add(1*time.Hour))
 			})
 			Convey("X-Vault-Token header should be set", func() {
 				So(c.headers.Get("X-Vault-Token"), ShouldEqual, token)

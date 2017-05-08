@@ -144,7 +144,7 @@ func (a *AWSAuth) Refresh() error {
 		return err
 	}
 	a.token = r.Data.ClientToken.ClientToken
-	a.expiry = time.Now().Add(time.Duration(r.Data.ClientToken.Duration) * time.Second)
+	a.expiry = time.Now().Add((time.Duration(r.Data.ClientToken.Duration) * time.Second) - expiryDelta)
 	a.headers.Set("X-Vault-Token", r.Data.ClientToken.ClientToken)
 	return nil
 }

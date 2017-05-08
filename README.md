@@ -208,3 +208,7 @@ func main() {
 	}
 }
 ```
+
+## Maintainers
+- [Taylor Thomas](https://github.com/thomastaylor312)
+- [Roger Ignazio](https://github.com/rji)
