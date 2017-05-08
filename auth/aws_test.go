@@ -111,6 +111,9 @@ func TestGetTokenAWS(t *testing.T) {
 			Convey("And should have a valid token", func() {
 				So(tok, ShouldEqual, "a-cool-token")
 			})
+			Convey("And should have a valid expiry time", func() {
+				So(a.expiry, ShouldHappenOnOrBefore, time.Now().Add(1*time.Hour))
+			})
 		})
 	}))
 	Convey("A valid AWSAuth", t, func() {

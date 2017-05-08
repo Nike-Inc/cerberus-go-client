@@ -24,10 +24,15 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/Nike-Inc/cerberus-go-client/api"
 	"github.com/Nike-Inc/cerberus-go-client/utils"
 )
+
+// expiryDelta is the amount of time to subtract from the expiry time to compensate for
+// network request time and clock skew
+const expiryDelta time.Duration = 60 * time.Second
 
 // The Auth interface describes the methods that all authentication providers must satisfy
 type Auth interface {

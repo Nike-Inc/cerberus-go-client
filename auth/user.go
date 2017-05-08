@@ -222,5 +222,5 @@ func (u *UserAuth) setToken(token string, duration int) {
 	u.token = token
 	// Set the auth header up to make things easier
 	u.headers.Set("X-Vault-Token", token)
-	u.expiry = time.Now().Add(time.Duration(duration) * time.Second)
+	u.expiry = time.Now().Add((time.Duration(duration) * time.Second) - expiryDelta)
 }
