@@ -10,7 +10,7 @@ The simplest way to get started is to use the user authentication:
 import (
 	"fmt"
 
-	cerberus "github.com/Nike-Inc/cerberus-go-client"
+	"github.com/Nike-Inc/cerberus-go-client/cerberus"
 	"github.com/Nike-Inc/cerberus-go-client/auth"
 )
 ...
@@ -148,7 +148,7 @@ import (
 	"fmt"
 	"os"
 
-	cerberus "github.com/Nike-Inc/cerberus-go-client"
+	"github.com/Nike-Inc/cerberus-go-client/cerberus"
 	"github.com/Nike-Inc/cerberus-go-client/api"
 	"github.com/Nike-Inc/cerberus-go-client/auth"
 	"golang.org/x/crypto/ssh/terminal"
