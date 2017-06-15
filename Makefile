@@ -3,6 +3,6 @@ test:
 bootstrap:
 	glide install
 build:
-	go build -o cerberus
+	go build -o cerberus-client
 
 .PHONY: test bootstrap build
