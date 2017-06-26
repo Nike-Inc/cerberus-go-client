@@ -1,6 +1,10 @@
 # Cerberus Go Client
 A Golang client for accessing Cerberus. To learn more about Cerberus, please visit
-the [Cerberus Website](http://engineering.nike.com/cerberus/)
+the [Cerberus Website](http://engineering.nike.com/cerberus/).
+
+[![Build Status](https://travis-ci.org/Nike-Inc/cerberus-go-client.svg?branch=master)](https://travis-ci.org/Nike-Inc/cerberus-go-client)
+[![GoDoc](https://godoc.org/github.com/Nike-Inc/cerberus-go-client/cerberus?status.svg)](https://godoc.org/github.com/Nike-Inc/cerberus-go-client/cerberus)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Nike-Inc/cerberus-go-client)](https://goreportcard.com/report/github.com/Nike-Inc/cerberus-go-client)
 
 ## Usage
 

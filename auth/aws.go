@@ -18,6 +18,7 @@ package auth
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -27,16 +28,21 @@ import (
 
 	"github.com/Nike-Inc/cerberus-go-client/api"
 	"github.com/Nike-Inc/cerberus-go-client/utils"
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/kms"
+	"github.com/aws/aws-sdk-go/service/kms/kmsiface"
 )
 
 // AWSAuth uses AWS roles and authentication to authenticate to Cerberus
 type AWSAuth struct {
-	token   string
-	region  string
-	roleARN string
-	expiry  time.Time
-	baseURL *url.URL
-	headers http.Header
+	token     string
+	region    string
+	roleARN   string
+	expiry    time.Time
+	baseURL   *url.URL
+	headers   http.Header
+	kmsClient kmsiface.KMSAPI
 }
 
 type awsAuthBody struct {
@@ -44,8 +50,14 @@ type awsAuthBody struct {
 	Region       string `json:"region"`
 }
 
+type iamIntermediateResp struct {
+	AuthData string `json:"auth_data"`
+}
+
 // NewAWSAuth returns an AWSAuth given a valid URL, ARN, and region. If the CERBERUS_URL
-// environment variable is set, it will be used over anything passed to this function
+// environment variable is set, it will be used over anything passed to this function.
+// It also expects you to have valid AWS credentials configured either by environment
+// variable or through a credentials config file
 func NewAWSAuth(cerberusURL, roleARN, region string) (*AWSAuth, error) {
 	// Check for the environment variable if the user has set it
 	if os.Getenv("CERBERUS_URL") != "" {
@@ -64,6 +76,12 @@ func NewAWSAuth(cerberusURL, roleARN, region string) (*AWSAuth, error) {
 	if err != nil {
 		return nil, err
 	}
+	sess, err := session.NewSession(&aws.Config{
+		Region: aws.String(region),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Unable to create AWS session: %s", err)
+	}
 	return &AWSAuth{
 		region:  region,
 		roleARN: roleARN,
@@ -72,6 +90,7 @@ func NewAWSAuth(cerberusURL, roleARN, region string) (*AWSAuth, error) {
 			"X-Cerberus-Client": []string{api.ClientHeader},
 			"Content-Type":      []string{"application/json"},
 		},
+		kmsClient: kms.New(sess),
 	}, nil
 }
 
@@ -116,11 +135,33 @@ func (a *AWSAuth) GetToken(f *os.File) (string, error) {
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("Error while trying to authenticate. Got HTTP response code %d", resp.StatusCode)
 	}
+
+	// Cerberus returns an encoded token body that we need to decrypt with AWS
+	// So this code pulls out the binary data from the response and attempts to
+	// decrypt it with AWS
 	decoder := json.NewDecoder(resp.Body)
-	r := &api.IAMAuthResponse{}
-	dErr := decoder.Decode(r)
+	intermediate := &iamIntermediateResp{}
+	dErr := decoder.Decode(intermediate)
 	if dErr != nil {
 		return "", fmt.Errorf("Error while trying to parse response from Cerberus: %v", err)
+	}
+
+	// Decode the binary data from base64
+	binaryData, err := base64.StdEncoding.DecodeString(intermediate.AuthData)
+	if err != nil {
+		return "", fmt.Errorf("Invalid authentication data returned from Cerberus: %s", err)
+	}
+	input := &kms.DecryptInput{
+		CiphertextBlob: binaryData,
+	}
+	result, err := a.kmsClient.Decrypt(input)
+	if err != nil {
+		return "", fmt.Errorf("Error while decrypting response: %s", err)
+	}
+	r := &api.IAMAuthResponse{}
+	parseErr := json.Unmarshal(result.Plaintext, r)
+	if parseErr != nil {
+		return "", fmt.Errorf("Error while parsing decrypted response: %s", parseErr)
 	}
 	a.token = r.Token
 	// Set the auth header up to make things easier
