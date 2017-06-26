@@ -1,5 +1,10 @@
 package: github.com/Nike-Inc/cerberus-go-client
 import:
+- package: github.com/aws/aws-sdk-go
+  version: ~1.10.1
+  subpackages:
+  - aws/session
+  - service/kms
 - package: github.com/hashicorp/vault
   version: ~0.7.0
   subpackages:

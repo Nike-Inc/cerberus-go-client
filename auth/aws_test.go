@@ -17,6 +17,8 @@ limitations under the License.
 package auth
 
 import (
+	"encoding/base64"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -24,8 +26,16 @@ import (
 	"time"
 
 	"github.com/Nike-Inc/cerberus-go-client/api"
+	"github.com/aws/aws-sdk-go/service/kms"
+	"github.com/aws/aws-sdk-go/service/kms/kmsiface"
 	. "github.com/smartystreets/goconvey/convey"
 )
+
+var fakeData = base64.StdEncoding.EncodeToString([]byte("This is a random string"))
+
+var fakeAuthBody = fmt.Sprintf(`{
+	"auth_data": %q
+}`, fakeData)
 
 var awsResponseBody = `{
     "client_token": "a-cool-token",
@@ -40,6 +50,23 @@ var awsResponseBody = `{
     "lease_duration": 3600,
     "renewable": true
 }`
+
+// This is the recommended way to mock out AWS testing
+// From: https://aws.amazon.com/blogs/developer/mocking-out-then-aws-sdk-for-go-for-unit-testing/
+type mockKMS struct {
+	kmsiface.KMSAPI
+	data        string
+	shouldError bool
+}
+
+func (m mockKMS) Decrypt(input *kms.DecryptInput) (*kms.DecryptOutput, error) {
+	if m.shouldError {
+		return nil, fmt.Errorf("Your decryption errored")
+	}
+	return &kms.DecryptOutput{
+		Plaintext: []byte(m.data),
+	}, nil
+}
 
 func TestNewAWSAuth(t *testing.T) {
 	Convey("A valid URL, arn, and region", t, func() {
@@ -99,12 +126,16 @@ func TestNewAWSAuth(t *testing.T) {
 }
 
 func TestGetTokenAWS(t *testing.T) {
-	Convey("A valid AWSAuth", t, TestingServer(http.StatusOK, "/v2/auth/iam-principal", http.MethodPost, awsResponseBody, map[string]string{
+	Convey("A valid AWSAuth", t, TestingServer(http.StatusOK, "/v2/auth/iam-principal", http.MethodPost, fakeAuthBody, map[string]string{
 		"X-Cerberus-Client": api.ClientHeader,
 	}, func(ts *httptest.Server) {
 		a, err := NewAWSAuth(ts.URL, "han-solo", "falcon")
 		So(err, ShouldBeNil)
 		So(a, ShouldNotBeNil)
+		a.kmsClient = mockKMS{
+			shouldError: false,
+			data:        awsResponseBody,
+		}
 		Convey("Should not error with getting a token", func() {
 			tok, err := a.GetToken(nil)
 			So(err, ShouldBeNil)
@@ -114,6 +145,40 @@ func TestGetTokenAWS(t *testing.T) {
 			Convey("And should have a valid expiry time", func() {
 				So(a.expiry, ShouldHappenOnOrBefore, time.Now().Add(1*time.Hour))
 			})
+		})
+	}))
+
+	Convey("A valid AWSAuth", t, TestingServer(http.StatusOK, "/v2/auth/iam-principal", http.MethodPost, "{", map[string]string{
+		"X-Cerberus-Client": api.ClientHeader,
+	}, func(ts *httptest.Server) {
+		a, err := NewAWSAuth(ts.URL, "han-solo", "falcon")
+		So(err, ShouldBeNil)
+		So(a, ShouldNotBeNil)
+		a.kmsClient = mockKMS{
+			shouldError: false,
+			data:        awsResponseBody,
+		}
+		Convey("Should error with an invalid response from Cerberus", func() {
+			tok, err := a.GetToken(nil)
+			So(tok, ShouldBeEmpty)
+			So(err, ShouldNotBeNil)
+		})
+	}))
+
+	Convey("A valid AWSAuth", t, TestingServer(http.StatusOK, "/v2/auth/iam-principal", http.MethodPost, fakeAuthBody, map[string]string{
+		"X-Cerberus-Client": api.ClientHeader,
+	}, func(ts *httptest.Server) {
+		a, err := NewAWSAuth(ts.URL, "han-solo", "falcon")
+		So(err, ShouldBeNil)
+		So(a, ShouldNotBeNil)
+		a.kmsClient = mockKMS{
+			shouldError: true,
+			data:        awsResponseBody,
+		}
+		Convey("Should error if decryption fails", func() {
+			tok, err := a.GetToken(nil)
+			So(tok, ShouldBeEmpty)
+			So(err, ShouldNotBeNil)
 		})
 	}))
 	Convey("A valid AWSAuth", t, func() {
