@@ -120,14 +120,14 @@ type UserMetadata struct {
 
 // SafeDepositBox represents a safe deposit box API object
 type SafeDepositBox struct {
-	ID                   string                `json:"id,omitempty"`
-	Name                 string                `json:"name,omitempty"`
-	Path                 string                `json:"path,omitempty"`
-	CategoryID           string                `json:"category_id,omitempty"`
-	Description          string                `json:"description,omitempty"`
-	Owner                string                `json:"owner,omitempty"`
-	UserGroupPermissions []UserGroupPermission `json:"user_group_permissions,omitempty"`
-	IAMRolePermissions   []IAMRole             `json:"iam_role_permissions,omitempty"`
+	ID                      string                `json:"id,omitempty"`
+	Name                    string                `json:"name,omitempty"`
+	Path                    string                `json:"path,omitempty"`
+	CategoryID              string                `json:"category_id,omitempty"`
+	Description             string                `json:"description,omitempty"`
+	Owner                   string                `json:"owner,omitempty"`
+	UserGroupPermissions    []UserGroupPermission `json:"user_group_permissions,omitempty"`
+	IAMPrincipalPermissions []IAMPrincipal        `json:"iam_principal_permissions,omitempty"`
 }
 
 // UserGroupPermission represents a user and group permission on an object
@@ -137,8 +137,8 @@ type UserGroupPermission struct {
 	RoleID string `json:"role_id"`
 }
 
-// IAMRole represents an IAM permission on an object
-type IAMRole struct {
+// IAMPrincipal represents an IAM permission on an object
+type IAMPrincipal struct {
 	ID              string
 	IAMPrincipalARN string `json:"iam_principal_arn"`
 	RoleID          string `json:"role_id"`
