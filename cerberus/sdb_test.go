@@ -22,8 +22,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/Nike-Inc/cerberus-go-client/api"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func WithTestServer(returnCode int, expectedPath, expectedMethod, body string, f func(ts *httptest.Server)) func() {
@@ -85,7 +85,7 @@ func TestGetSDB(t *testing.T) {
             "role_id": "f800558e-faaa-11e5-a8a9-7fa3b294cd46"
         }
     ],
-    "iam_role_permissions": [
+    "iam_principal_permissions": [
         {
             "id": "d05bf72e-faad-11e5-a8a9-7fa3b294cd46",
             "iam_principal_arn": "arn:aws:iam::1111111111:role/role-name",
@@ -108,8 +108,8 @@ func TestGetSDB(t *testing.T) {
 				RoleID: "f800558e-faaa-11e5-a8a9-7fa3b294cd46",
 			},
 		},
-		IAMRolePermissions: []api.IAMRole{
-			api.IAMRole{
+		IAMPrincipalPermissions: []api.IAMPrincipal{
+			api.IAMPrincipal{
 				ID:              "d05bf72e-faad-11e5-a8a9-7fa3b294cd46",
 				IAMPrincipalARN: "arn:aws:iam::1111111111:role/role-name",
 				RoleID:          "f800558e-faaa-11e5-a8a9-7fa3b294cd46",
@@ -320,7 +320,7 @@ func TestCreateSDB(t *testing.T) {
             "role_id": "f800558e-faaa-11e5-a8a9-7fa3b294cd46"
         }
     ],
-    "iam_role_permissions": [
+    "iam_principal_permissions": [
         {
             "id": "d05bf72e-faad-11e5-a8a9-7fa3b294cd46",
             "iam_principal_arn": "arn:aws:iam::1111111111:role/role-name",
@@ -343,8 +343,8 @@ func TestCreateSDB(t *testing.T) {
 				RoleID: "f800558e-faaa-11e5-a8a9-7fa3b294cd46",
 			},
 		},
-		IAMRolePermissions: []api.IAMRole{
-			api.IAMRole{
+		IAMPrincipalPermissions: []api.IAMPrincipal{
+			api.IAMPrincipal{
 				ID:              "d05bf72e-faad-11e5-a8a9-7fa3b294cd46",
 				IAMPrincipalARN: "arn:aws:iam::1111111111:role/role-name",
 				RoleID:          "f800558e-faaa-11e5-a8a9-7fa3b294cd46",
@@ -364,8 +364,8 @@ func TestCreateSDB(t *testing.T) {
 				RoleID: "f800558e-faaa-11e5-a8a9-7fa3b294cd46",
 			},
 		},
-		IAMRolePermissions: []api.IAMRole{
-			api.IAMRole{
+		IAMPrincipalPermissions: []api.IAMPrincipal{
+			api.IAMPrincipal{
 				ID:              "d05bf72e-faad-11e5-a8a9-7fa3b294cd46",
 				IAMPrincipalARN: "arn:aws:iam::1111111111:role/role-name",
 				RoleID:          "f800558e-faaa-11e5-a8a9-7fa3b294cd46",
@@ -453,7 +453,7 @@ func TestUpdateSDB(t *testing.T) {
             "role_id": "f800558e-faaa-11e5-a8a9-7fa3b294cd46"
         }
     ],
-    "iam_role_permissions": [
+    "iam_principal_permissions": [
         {
             "id": "d05bf72e-faad-11e5-a8a9-7fa3b294cd46",
             "iam_principal_arn": "arn:aws:iam::1111111111:role/role-name",
@@ -476,8 +476,8 @@ func TestUpdateSDB(t *testing.T) {
 				RoleID: "f800558e-faaa-11e5-a8a9-7fa3b294cd46",
 			},
 		},
-		IAMRolePermissions: []api.IAMRole{
-			api.IAMRole{
+		IAMPrincipalPermissions: []api.IAMPrincipal{
+			api.IAMPrincipal{
 				ID:              "d05bf72e-faad-11e5-a8a9-7fa3b294cd46",
 				IAMPrincipalARN: "arn:aws:iam::1111111111:role/role-name",
 				RoleID:          "f800558e-faaa-11e5-a8a9-7fa3b294cd46",
