@@ -106,6 +106,11 @@ func (a *AWSAuth) GetToken(f *os.File) (string, error) {
 	if a.IsAuthenticated() {
 		return a.token, nil
 	}
+	err := a.authenticate()
+	return a.token, err
+}
+
+func (a *AWSAuth) authenticate() error {
 	// Make a copy of the base URL
 	builtURL := *a.baseURL
 	builtURL.Path = "/v2/auth/iam-principal"
@@ -116,24 +121,24 @@ func (a *AWSAuth) GetToken(f *os.File) (string, error) {
 		Region:       a.region,
 	})
 	if err != nil {
-		return "", err
+		return err
 	}
 	req, err := http.NewRequest("POST", builtURL.String(), body)
 	if err != nil {
-		return "", fmt.Errorf("Problem while performing request to Cerberus: %v", err)
+		return fmt.Errorf("Problem while performing request to Cerberus: %v", err)
 	}
 	req.Header = a.headers
 	cl := http.Client{}
 
 	resp, err := cl.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("Problem while performing request to Cerberus: %v", err)
+		return fmt.Errorf("Problem while performing request to Cerberus: %v", err)
 	}
 	if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-		return "", api.ErrorUnauthorized
+		return api.ErrorUnauthorized
 	}
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("Error while trying to authenticate. Got HTTP response code %d", resp.StatusCode)
+		return fmt.Errorf("Error while trying to authenticate. Got HTTP response code %d", resp.StatusCode)
 	}
 
 	// Cerberus returns an encoded token body that we need to decrypt with AWS
@@ -143,31 +148,31 @@ func (a *AWSAuth) GetToken(f *os.File) (string, error) {
 	intermediate := &iamIntermediateResp{}
 	dErr := decoder.Decode(intermediate)
 	if dErr != nil {
-		return "", fmt.Errorf("Error while trying to parse response from Cerberus: %v", err)
+		return fmt.Errorf("Error while trying to parse response from Cerberus: %v", err)
 	}
 
 	// Decode the binary data from base64
 	binaryData, err := base64.StdEncoding.DecodeString(intermediate.AuthData)
 	if err != nil {
-		return "", fmt.Errorf("Invalid authentication data returned from Cerberus: %s", err)
+		return fmt.Errorf("Invalid authentication data returned from Cerberus: %s", err)
 	}
 	input := &kms.DecryptInput{
 		CiphertextBlob: binaryData,
 	}
 	result, err := a.kmsClient.Decrypt(input)
 	if err != nil {
-		return "", fmt.Errorf("Error while decrypting response: %s", err)
+		return fmt.Errorf("Error while decrypting response: %s", err)
 	}
 	r := &api.IAMAuthResponse{}
 	parseErr := json.Unmarshal(result.Plaintext, r)
 	if parseErr != nil {
-		return "", fmt.Errorf("Error while parsing decrypted response: %s", parseErr)
+		return fmt.Errorf("Error while parsing decrypted response: %s", parseErr)
 	}
 	a.token = r.Token
 	// Set the auth header up to make things easier
 	a.headers.Set("X-Vault-Token", r.Token)
 	a.expiry = time.Now().Add(time.Duration(r.Duration) * time.Second)
-	return a.token, nil
+	return nil
 }
 
 // IsAuthenticated returns whether or not the current token is set and is not expired
@@ -175,19 +180,21 @@ func (a *AWSAuth) IsAuthenticated() bool {
 	return len(a.token) > 0 && time.Now().Before(a.expiry)
 }
 
-// Refresh refreshes the current token
+// Refresh refreshes the current token. For AWS Auth, this is just an alias to
+// reauthenticate against the API.
 func (a *AWSAuth) Refresh() error {
 	if !a.IsAuthenticated() {
 		return api.ErrorUnauthenticated
 	}
-	r, err := Refresh(*a.baseURL, a.headers)
-	if err != nil {
-		return err
-	}
-	a.token = r.Data.ClientToken.ClientToken
-	a.expiry = time.Now().Add((time.Duration(r.Data.ClientToken.Duration) * time.Second) - expiryDelta)
-	a.headers.Set("X-Vault-Token", r.Data.ClientToken.ClientToken)
-	return nil
+	// A note on why we are just reauthenticating: You can refresh an AWS token,
+	// but there is a limit (24) to the number of refreshes and the API requests
+	// that you refresh your token on every SDB creation. When doing this in an
+	// automation context, you could surpass this limit. You could not refresh
+	// the token, but it can get you in to a state where you can't perform some
+	// operations. This is less than ideal but better than having an arbitary
+	// bound on the number of refreshes and having to track how many have been
+	// done.
+	return a.authenticate()
 }
 
 // Logout deauthorizes the current valid token. This will return an error if the token

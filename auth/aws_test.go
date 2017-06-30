@@ -238,47 +238,6 @@ func TestIsAuthenticatedAWS(t *testing.T) {
 }
 
 func TestRefreshAWS(t *testing.T) {
-	var testToken = "leia"
-	var expectedHeaders = map[string]string{
-		"X-Vault-Token":     testToken,
-		"X-Cerberus-Client": api.ClientHeader,
-	}
-	Convey("A valid AWSAuth", t, TestingServer(http.StatusOK, "/v2/auth/user/refresh", http.MethodGet, authResponseBody, expectedHeaders, func(ts *httptest.Server) {
-		testHeaders := http.Header{}
-		testHeaders.Add("X-Vault-Token", testToken)
-		testHeaders.Add("X-Cerberus-Client", api.ClientHeader)
-		a, err := NewAWSAuth(ts.URL, "han-solo", "falcon")
-		So(err, ShouldBeNil)
-		So(a, ShouldNotBeNil)
-		a.expiry = time.Now().Add(100 * time.Second)
-		a.token = testToken
-		a.headers = testHeaders
-		Convey("Should not error on refresh", func() {
-			err := a.Refresh()
-			So(err, ShouldBeNil)
-			Convey("And should have a valid new token", func() {
-				// See the authResponseBody definition for the location of the new token
-				So(a.token, ShouldEqual, "a-cool-token")
-			})
-		})
-	}))
-
-	Convey("A valid AWSAuth", t, TestingServer(http.StatusInternalServerError, "/v2/auth/user/refresh", http.MethodGet, "", expectedHeaders, func(ts *httptest.Server) {
-		testHeaders := http.Header{}
-		testHeaders.Add("X-Vault-Token", testToken)
-		testHeaders.Add("X-Cerberus-Client", api.ClientHeader)
-		a, err := NewAWSAuth(ts.URL, "jabba", "hutt")
-		So(err, ShouldBeNil)
-		So(a, ShouldNotBeNil)
-		a.expiry = time.Now().Add(100 * time.Second)
-		a.token = testToken
-		a.headers = testHeaders
-		Convey("Should error with invalid response from server", func() {
-			err := a.Refresh()
-			So(err, ShouldNotBeNil)
-		})
-	}))
-
 	Convey("An unauthenticated AWSAuth", t, func() {
 		a, err := NewAWSAuth("https://test.example.com", "sarlacc", "pit")
 		So(err, ShouldBeNil)
