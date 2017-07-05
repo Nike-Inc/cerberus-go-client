@@ -147,6 +147,12 @@ func (c *Client) DoRequest(method, path string, params map[string]string, data i
 		if err := c.Authentication.Refresh(); err != nil {
 			// logging here
 		}
+		tok, err := c.Authentication.GetToken(nil)
+		if err != nil {
+			return nil, err
+		}
+		// Used the returned token to set it as the token for this client as well
+		c.vaultClient.SetToken(tok)
 	}
 	return resp, nil
 }
