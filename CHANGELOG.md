@@ -2,6 +2,12 @@
 
 All notable changes to `Cerberus Go Client` will be documented in this file. 
 
+### IAM auth flow change (v0.3.0) - July 2017
+This release contains a change in the IAM authentication flow. Instead of refreshing
+the token using the refresh endpoint, this changes it to reauthenticate when
+`Refresh` is called. This change was made so that automated tools can more easily
+use the client.
+
 ### Struct name fix (v0.2.2) - June 2017
 Contains a fix for a API name change in v2
 
