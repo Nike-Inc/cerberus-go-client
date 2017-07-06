@@ -26,8 +26,8 @@ import (
 	"os"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/Nike-Inc/cerberus-go-client/api"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 type MockAuth struct {
@@ -37,6 +37,8 @@ type MockAuth struct {
 	getTokenErr bool
 	refreshErr  bool
 }
+
+const refreshedToken = "a refreshed token"
 
 func GenerateMockAuth(cerberusURL, token string, tokenErr, refreshErr bool) *MockAuth {
 	baseURL, _ := url.Parse(cerberusURL)
@@ -65,6 +67,7 @@ func (m *MockAuth) IsAuthenticated() bool {
 
 func (m *MockAuth) Refresh() error {
 	if !m.refreshErr {
+		m.token = refreshedToken
 		return nil
 	}
 	return fmt.Errorf("Arrrrrg...an error matey")
@@ -221,6 +224,23 @@ func TestDoRequest(t *testing.T) {
 			resp, err := cl.DoRequest(http.MethodPost, "/v1/books/armaments", map[string]string{}, testData)
 			So(err, ShouldBeNil)
 			So(resp.StatusCode, ShouldEqual, http.StatusOK)
+		})
+	}))
+
+	Convey("Valid POST request", t, WithServer(http.StatusOK, true, "/v1/books/armaments", http.MethodPost, "holy hand grenade of antioch", map[string]string{}, func(ts *httptest.Server) {
+		cl, _ := NewClient(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil)
+		So(cl, ShouldNotBeNil)
+		var testData = map[string]string{
+			"character": "Brother Maynard",
+			"weapon":    "holy hand grenade of antioch",
+		}
+		Convey("Should return a valid response", func() {
+			resp, err := cl.DoRequest(http.MethodPost, "/v1/books/armaments", map[string]string{}, testData)
+			So(err, ShouldBeNil)
+			So(resp.StatusCode, ShouldEqual, http.StatusOK)
+			Convey("Vault token should be set to the new token", func() {
+				So(cl.vaultClient.Token(), ShouldEqual, refreshedToken)
+			})
 		})
 	}))
 

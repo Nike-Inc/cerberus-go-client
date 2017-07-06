@@ -133,7 +133,7 @@ type SafeDepositBox struct {
 // UserGroupPermission represents a user and group permission on an object
 type UserGroupPermission struct {
 	ID     string
-	Name   string
+	Name   string `json:"name"`
 	RoleID string `json:"role_id"`
 }
 
