@@ -2,6 +2,11 @@
 
 All notable changes to `Cerberus Go Client` will be documented in this file. 
 
+### Fix for Vault token refresh (v0.3.1) - July 2017
+When the API requested a refresh, the client was correctly refreshing the token.
+However, it was not updating the token assigned to the underlying Vault client.
+This also contains a fix for some improper JSON marshaling.
+
 ### IAM auth flow change (v0.3.0) - July 2017
 This release contains a change in the IAM authentication flow. Instead of refreshing
 the token using the refresh endpoint, this changes it to reauthenticate when
