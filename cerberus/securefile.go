@@ -44,9 +44,13 @@ func (r *SecureFile) List(rootpath string) (*api.SecureFilesResponse, error) {
 			"list": "true",
 		},
 		nil)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, fmt.Errorf("error while trying to get secure files: %v", err)
 	}
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("error while trying to list secure files. Got HTTP status code %d",
 			resp.StatusCode)
@@ -65,10 +69,12 @@ func (r *SecureFile) Get(secureFilePath string, output io.Writer) error {
 		path.Join(secureFileBasePath, secureFilePath),
 		map[string]string{},
 		nil)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return fmt.Errorf("error while downloading secure file: %v", err)
 	}
-	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("error while trying to download secure file %s. Got HTTP status code %d",
@@ -125,10 +131,12 @@ func (r *SecureFile) Put(secureFilePath string, filename string, input io.Reader
 		map[string]string{},
 		contentType,
 		body)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return fmt.Errorf("error while downloading secure file: %v", err)
 	}
-	defer resp.Body.Close()
 
 	// expected sucess reply is "no content"
 	if resp.StatusCode != http.StatusNoContent {

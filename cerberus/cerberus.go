@@ -141,7 +141,8 @@ func (c *Client) DoRequestWithBody(method, path string, params map[string]string
 
 	resp, respErr := c.httpClient.Do(req)
 	if respErr != nil {
-		return nil, respErr
+		// We may get an actual response for redirect error
+		return resp, respErr
 	}
 	// Cerberus uses a refresh token header. If that header is sent with a value of "true,"
 	// refresh the token before returning

@@ -33,9 +33,13 @@ var roleBasePath = "/v1/role"
 // List returns a list of roles that can be granted
 func (r *Role) List() ([]*api.Role, error) {
 	resp, err := r.c.DoRequest(http.MethodGet, roleBasePath, map[string]string{}, nil)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, fmt.Errorf("Error while trying to get roles: %v", err)
 	}
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("Error while trying to GET roles. Got HTTP status code %d", resp.StatusCode)
 	}
