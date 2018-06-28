@@ -47,9 +47,13 @@ func (m *Metadata) List(opts MetadataOpts) (*api.MetadataResponse, error) {
 	params["limit"] = fmt.Sprintf("%d", opts.Limit)
 	params["offset"] = fmt.Sprintf("%d", opts.Offset)
 	resp, err := m.c.DoRequest(http.MethodGet, metadataBasePath, params, nil)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, fmt.Errorf("Error while trying to get roles: %v", err)
 	}
+
 	// Check if it is a bad request (improperly set params)
 	if resp.StatusCode == http.StatusBadRequest {
 		// Return the API error to the user

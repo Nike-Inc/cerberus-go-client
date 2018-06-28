@@ -190,3 +190,29 @@ type SDBMetadata struct {
 	UserGroupPermissions map[string]string `json:"user_group_permissions"`
 	IAMRolePermissions   map[string]string `json:"iam_role_permissions"`
 }
+
+// SecureFileSummary represents the metadata of a specific secure-file
+type SecureFileSummary struct {
+	Name                 string            `json:"name"`
+	Path                 string            `json:"path"`
+	Size                 int               `json:"size_in_bytes"`
+	SDBID                string            `json:"sdbox_id"`
+	Created              time.Time         `json:"created_ts"`
+	CreatedBy            string            `json:"created_by"`
+	LastUpdated          time.Time         `json:"last_updated_ts"`
+	LastUpdatedBy        string            `json:"last_updated_by"`
+	UserGroupPermissions map[string]string `json:"user_group_permissions"`
+	IAMRolePermissions   map[string]string `json:"iam_role_permissions"`
+}
+
+// SecureFilesResponse is an object that wraps a list of SecureFileSummary for convenience with pagination
+type SecureFilesResponse struct {
+	HasNext    bool `json:"has_next"`
+	NextOffset int  `json:"next_offset"`
+	Limit      int
+	Offset     int
+
+	ResultCount int                 `json:"file_count_in_result"`
+	TotalCount  int                 `json:"total_file_count"`
+	Summaries   []SecureFileSummary `json:"secure_file_summaries"`
+}

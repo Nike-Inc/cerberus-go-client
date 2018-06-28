@@ -33,9 +33,13 @@ var categoryBasePath = "/v1/category"
 // List returns a list of roles that can be granted
 func (r *Category) List() ([]*api.Category, error) {
 	resp, err := r.c.DoRequest(http.MethodGet, categoryBasePath, map[string]string{}, nil)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, fmt.Errorf("Error while trying to get categories: %v", err)
 	}
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("Error while trying to GET categories. Got HTTP status code %d", resp.StatusCode)
 	}

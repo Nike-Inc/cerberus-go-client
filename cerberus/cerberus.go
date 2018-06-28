@@ -99,13 +99,19 @@ func (c *Client) Metadata() *Metadata {
 	}
 }
 
+// SecureFile returns the SecureFile client
+func (c *Client) SecureFile() *SecureFile {
+	return &SecureFile{
+		c: c,
+	}
+}
+
 // ErrorBodyNotReturned is an error indicating that the server did not return error details (in case of a non-successful status).
 // This likely means that there is some sort of server error that is occurring
 var ErrorBodyNotReturned = fmt.Errorf("No error body returned from server")
 
-// DoRequest is used to perform an HTTP request with the given method and path
-// This method is what is called by other parts of the client and is exposed for advanced usage
-func (c *Client) DoRequest(method, path string, params map[string]string, data interface{}) (*http.Response, error) {
+// DoRequestWithBody executes a request with provided body
+func (c *Client) DoRequestWithBody(method, path string, params map[string]string, contentType string, body io.Reader) (*http.Response, error) {
 	// Get a copy of the base URL and add the path
 	var baseURL = *c.CerberusURL
 	baseURL.Path = path
@@ -117,18 +123,8 @@ func (c *Client) DoRequest(method, path string, params map[string]string, data i
 	baseURL.RawQuery = p.Encode()
 	var req *http.Request
 	var err error
-	if data == nil {
-		req, err = http.NewRequest(method, baseURL.String(), nil)
-	} else {
-		// Encode the body to send in the request if one was given
-		body := &bytes.Buffer{}
-		err := json.NewEncoder(body).Encode(data)
-		if err != nil {
-			return nil, err
-		}
-		req, err = http.NewRequest(method, baseURL.String(), body)
-	}
 
+	req, err = http.NewRequest(method, baseURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
@@ -137,9 +133,16 @@ func (c *Client) DoRequest(method, path string, params map[string]string, data i
 		return nil, headerErr
 	}
 	req.Header = headers
+
+	// Add content type if present
+	if contentType != "" {
+		req.Header.Set("Content-Type", contentType)
+	}
+
 	resp, respErr := c.httpClient.Do(req)
 	if respErr != nil {
-		return nil, respErr
+		// We may get an actual response for redirect error
+		return resp, respErr
 	}
 	// Cerberus uses a refresh token header. If that header is sent with a value of "true,"
 	// refresh the token before returning
@@ -157,14 +160,29 @@ func (c *Client) DoRequest(method, path string, params map[string]string, data i
 	return resp, nil
 }
 
+// DoRequest is used to perform an HTTP request with the given method and path
+// This method is what is called by other parts of the client and is exposed for advanced usage
+func (c *Client) DoRequest(method, path string, params map[string]string, data interface{}) (*http.Response, error) {
+	var body io.ReadWriter
+	var contentType string
+
+	if data != nil {
+		body = &bytes.Buffer{}
+		contentType = "application/json"
+		err := json.NewEncoder(body).Encode(data)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return c.DoRequestWithBody(method, path, params, contentType, body)
+}
+
 // parseResponse marshals the given body into the given interface. It should be used just like
 // json.Marshal in that you pass a pointer to the function.
 func parseResponse(r io.Reader, parseTo interface{}) error {
 	// Decode the body into the provided interface
-	if err := json.NewDecoder(r).Decode(parseTo); err != nil {
-		return err
-	}
-	return nil
+	return json.NewDecoder(r).Decode(parseTo)
 }
 
 // handleAPIError is a helper for parsing an error response body from the API.

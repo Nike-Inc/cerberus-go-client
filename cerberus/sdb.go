@@ -62,9 +62,13 @@ func (s *SDB) Get(id string) (*api.SafeDepositBox, error) {
 	}
 	returnedSDB := &api.SafeDepositBox{}
 	resp, err := s.c.DoRequest(http.MethodGet, sdbBasePath+"/"+id, map[string]string{}, nil)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, fmt.Errorf("Error while trying to get SDB: %v", err)
 	}
+
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, ErrorSafeDepositBoxNotFound
 	}
@@ -82,9 +86,13 @@ func (s *SDB) Get(id string) (*api.SafeDepositBox, error) {
 func (s *SDB) List() ([]*api.SafeDepositBox, error) {
 	sdbList := []*api.SafeDepositBox{}
 	resp, err := s.c.DoRequest(http.MethodGet, sdbBasePath, map[string]string{}, nil)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, fmt.Errorf("Error while trying to list SDB: %v", err)
 	}
+
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("Error while trying to GET SDB list. Got HTTP status code %d", resp.StatusCode)
 	}
@@ -100,9 +108,13 @@ func (s *SDB) Create(newSDB *api.SafeDepositBox) (*api.SafeDepositBox, error) {
 	// Create the object we are returning
 	createdSDB := &api.SafeDepositBox{}
 	resp, err := s.c.DoRequest(http.MethodPost, sdbBasePath, map[string]string{}, newSDB)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, fmt.Errorf("Error while creating SDB: %v", err)
 	}
+
 	if resp.StatusCode == http.StatusBadRequest {
 		// Return the API error to the user
 		return nil, handleAPIError(resp.Body)
@@ -133,9 +145,13 @@ func (s *SDB) Update(id string, updatedSDB *api.SafeDepositBox) (*api.SafeDeposi
 	}
 	returnedSDB := &api.SafeDepositBox{}
 	resp, err := s.c.DoRequest(http.MethodPut, sdbBasePath+"/"+id, map[string]string{}, updatedSDB)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return nil, fmt.Errorf("Error while updating SDB: %v", err)
 	}
+
 	if resp.StatusCode == http.StatusNotFound {
 		return nil, ErrorSafeDepositBoxNotFound
 	}
@@ -166,9 +182,13 @@ func (s *SDB) Delete(id string) error {
 		return ErrorSafeDepositBoxNotFound
 	}
 	resp, err := s.c.DoRequest(http.MethodDelete, sdbBasePath+"/"+id, map[string]string{}, nil)
+	if resp != nil {
+		defer resp.Body.Close()
+	}
 	if err != nil {
 		return fmt.Errorf("Error while deleting SDB: %v", err)
 	}
+
 	if resp.StatusCode == http.StatusNotFound {
 		return ErrorSafeDepositBoxNotFound
 	}
