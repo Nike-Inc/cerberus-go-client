@@ -1,5 +1,5 @@
 /*
-Copyright 2017 Nike Inc.
+Copyright 2019 Nike Inc.
 
 Licensed under the Apache License, Version 2.0 (the License);
 you may not use this file except in compliance with the License.
@@ -45,8 +45,8 @@ func GenerateMockAuth(cerberusURL, token string, tokenErr, refreshErr bool) *Moc
 	return &MockAuth{
 		baseURL: baseURL,
 		headers: http.Header{
-			"Content-Type":  []string{"application/json"},
-			"X-Vault-Token": []string{token},
+			"Content-Type":     []string{"application/json"},
+			"X-Cerberus-Token": []string{token},
 		},
 		token:       token,
 		getTokenErr: tokenErr,
@@ -58,7 +58,7 @@ func (m *MockAuth) GetToken(f *os.File) (string, error) {
 	if !m.getTokenErr {
 		return m.token, nil
 	}
-	return "", fmt.Errorf("Arrrrrg...an error matey")
+	return "", fmt.Errorf("MockAuth unable to obtain token")
 }
 
 func (m *MockAuth) IsAuthenticated() bool {
@@ -70,7 +70,7 @@ func (m *MockAuth) Refresh() error {
 		m.token = refreshedToken
 		return nil
 	}
-	return fmt.Errorf("Arrrrrg...an error matey")
+	return fmt.Errorf("MockAuth unable to obtain token")
 }
 
 func (m *MockAuth) Logout() error {
@@ -184,7 +184,6 @@ func WithServer(returnCode int, shouldRefresh bool, expectedPath, expectedMethod
 				ts.Close()
 			})
 		})
-
 	}
 }
 
@@ -253,7 +252,7 @@ func TestDoRequest(t *testing.T) {
 		}
 		Convey("Should still return a valid response", func() {
 			resp, err := cl.DoRequest(http.MethodPost, "/v1/books/armaments", map[string]string{}, testData)
-			So(err, ShouldBeNil)
+			So(err, ShouldNotBeNil)
 			So(resp.StatusCode, ShouldEqual, http.StatusOK)
 		})
 	}))

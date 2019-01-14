@@ -121,7 +121,7 @@ func TestNewUserAuth(t *testing.T) {
 	})
 }
 
-func TestGetURL(t *testing.T) {
+func TestGetURLUser(t *testing.T) {
 	Convey("A valid client", t, func() {
 		c, _ := NewUserAuth("http://example.com", "user", "pass")
 		So(c, ShouldNotBeNil)
@@ -170,8 +170,8 @@ func TestGetTokenUser(t *testing.T) {
 			Convey("And should have a valid expiry time", func() {
 				So(c.expiry, ShouldHappenOnOrBefore, time.Now().Add(1*time.Hour))
 			})
-			Convey("X-Vault-Token header should be set", func() {
-				So(c.headers.Get("X-Vault-Token"), ShouldEqual, token)
+			Convey("X-Cerberus-Token header should be set", func() {
+				So(c.headers.Get("X-Cerberus-Token"), ShouldEqual, token)
 			})
 		})
 	}))
@@ -269,7 +269,7 @@ func TestGetTokenUser(t *testing.T) {
 
 func TestRefreshUser(t *testing.T) {
 	var token = "a-new-token"
-	Convey("Refreshing a token", t, WithServer(api.AuthUserSuccess, http.StatusOK, token, "/v2/auth/user/refresh", http.MethodGet, map[string]string{"X-Vault-Token": "an-old-token", "X-Cerberus-Client": api.ClientHeader}, func(ts *httptest.Server) {
+	Convey("Refreshing a token", t, WithServer(api.AuthUserSuccess, http.StatusOK, token, "/v2/auth/user/refresh", http.MethodGet, map[string]string{"X-Cerberus-Token": "an-old-token", "X-Cerberus-Client": api.ClientHeader}, func(ts *httptest.Server) {
 		c, _ := NewUserAuth(ts.URL, "user", "password")
 		So(c, ShouldNotBeNil)
 		c.setToken("an-old-token", 3600)
@@ -280,8 +280,8 @@ func TestRefreshUser(t *testing.T) {
 			Convey("And should have a valid expiry time", func() {
 				So(c.expiry, ShouldHappenOnOrBefore, time.Now().Add(3600*time.Second))
 			})
-			Convey("X-Vault-Token header should be set", func() {
-				So(c.headers.Get("X-Vault-Token"), ShouldEqual, token)
+			Convey("X-Cerberus-Token header should be set", func() {
+				So(c.headers.Get("X-Cerberus-Token"), ShouldEqual, token)
 			})
 		})
 	}))
@@ -319,7 +319,7 @@ func TestRefreshUser(t *testing.T) {
 	// refreshes itself with username/password. But we probably should add a test case
 }
 
-func TestGetHeaders(t *testing.T) {
+func TestGetHeadersUser(t *testing.T) {
 	Convey("Getting headers when not authenticated", t, func() {
 		c, _ := NewUserAuth("http://example.com", "user", "password")
 		So(c, ShouldNotBeNil)
@@ -337,8 +337,8 @@ func TestGetHeaders(t *testing.T) {
 		Convey("Should not error", func() {
 			So(err, ShouldBeNil)
 		})
-		Convey("Should contain X-Vault-Token", func() {
-			So(headers.Get("X-Vault-Token"), ShouldEqual, "an-old-token")
+		Convey("Should contain X-Cerberus-Token", func() {
+			So(headers.Get("X-Cerberus-Token"), ShouldEqual, "an-old-token")
 			So(headers.Get("X-Cerberus-Client"), ShouldEqual, api.ClientHeader)
 		})
 	})
@@ -373,7 +373,7 @@ func TestLogoutUser(t *testing.T) {
 		})
 	}))
 
-	Convey("Logging out with valid token", t, WithServer(api.AuthUserSuccess, http.StatusNoContent, "", "/v1/auth", http.MethodDelete, map[string]string{"X-Vault-Token": "an-old-token"}, func(ts *httptest.Server) {
+	Convey("Logging out with valid token", t, WithServer(api.AuthUserSuccess, http.StatusNoContent, "", "/v1/auth", http.MethodDelete, map[string]string{"X-Cerberus-Token": "an-old-token"}, func(ts *httptest.Server) {
 		c, _ := NewUserAuth(ts.URL, "user", "password")
 		So(c, ShouldNotBeNil)
 		c.setToken("an-old-token", 3600)
@@ -384,7 +384,7 @@ func TestLogoutUser(t *testing.T) {
 				So(c.token, ShouldBeEmpty)
 			})
 			Convey("Headers should no longer be set", func() {
-				So(c.headers.Get("X-Vault-Token"), ShouldBeEmpty)
+				So(c.headers.Get("X-Cerberus-Token"), ShouldBeEmpty)
 			})
 		})
 	}))

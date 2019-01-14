@@ -24,13 +24,13 @@ import (
 
 func TestErrorResponse(t *testing.T) {
 	var fakeError = ErrorResponse{
-		ErrorID: "help-help-im-being-repressed",
+		ErrorID: "test-error-id",
 		Errors: []ErrorDetail{
 			ErrorDetail{
 				Code:    12345,
-				Message: "Strange women lying in ponds distributing swords is no basis for a system of government",
+				Message: "Test error message.",
 				Metadata: map[string]interface{}{
-					"fields": "king_arthur",
+					"fields": "test",
 				},
 			},
 		},
@@ -38,7 +38,7 @@ func TestErrorResponse(t *testing.T) {
 	Convey("A valid ErrorResponse Error method call", t, func() {
 		stringErr := fakeError.Error()
 		Convey("Should give a valid string", func() {
-			So(stringErr, ShouldStartWith, "Error from API. ID: help-help-im-being-repressed")
+			So(stringErr, ShouldStartWith, "Error from API. ID: test-error-id")
 		})
 	})
 }

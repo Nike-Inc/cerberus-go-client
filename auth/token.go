@@ -65,7 +65,7 @@ func NewTokenAuth(cerberusURL, token string) (*TokenAuth, error) {
 	}
 	headers.Set("Content-Type", "application/json")
 	headers.Set("Accept", "application/json")
-	headers.Set("X-Vault-Token", token)
+	headers.Set("X-Cerberus-Token", token)
 	return &TokenAuth{
 		baseURL: parsedURL,
 		headers: headers,
@@ -99,7 +99,7 @@ func (t *TokenAuth) Refresh() error {
 		return err
 	}
 	t.token = r.Data.ClientToken.ClientToken
-	t.headers.Set("X-Vault-Token", r.Data.ClientToken.ClientToken)
+	t.headers.Set("X-Cerberus-Token", r.Data.ClientToken.ClientToken)
 	return nil
 }
 
@@ -114,7 +114,7 @@ func (t *TokenAuth) Logout() error {
 	}
 	// Reset the token and header
 	t.token = ""
-	t.headers.Del("X-Vault-Token")
+	t.headers.Del("X-Cerberus-Token")
 	return nil
 }
 

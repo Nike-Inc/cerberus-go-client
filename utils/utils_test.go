@@ -21,8 +21,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/Nike-Inc/cerberus-go-client/api"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestValidateURL(t *testing.T) {

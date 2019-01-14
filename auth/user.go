@@ -127,7 +127,7 @@ func (u *UserAuth) Logout() error {
 	}
 	// Reset the token and header
 	u.token = ""
-	u.headers.Del("X-Vault-Token")
+	u.headers.Del("X-Cerberus-Token")
 	return nil
 }
 
@@ -221,6 +221,6 @@ func (u *UserAuth) doMFA(stateToken, deviceID string, readFrom *os.File) error {
 func (u *UserAuth) setToken(token string, duration int) {
 	u.token = token
 	// Set the auth header up to make things easier
-	u.headers.Set("X-Vault-Token", token)
+	u.headers.Set("X-Cerberus-Token", token)
 	u.expiry = time.Now().Add((time.Duration(duration) * time.Second) - expiryDelta)
 }
