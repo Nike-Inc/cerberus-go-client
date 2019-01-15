@@ -56,6 +56,7 @@ func (r *SecureFile) List(rootpath string) (*api.SecureFilesResponse, error) {
 			resp.StatusCode)
 	}
 	sfr := &api.SecureFilesResponse{}
+	//sfr := &api.
 	err = parseResponse(resp.Body, sfr)
 	if err != nil {
 		return nil, err

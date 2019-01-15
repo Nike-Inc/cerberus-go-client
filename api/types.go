@@ -27,7 +27,7 @@ import (
 )
 
 // ClientHeader is the header version for all requests. It should be updated on version bumps
-const ClientHeader = "CerberusGoClient/0.3.1"
+const ClientHeader = "CerberusGoClient/0.4.0"
 
 // AuthStatus is the status of a UserAuthResponse
 type AuthStatus string
@@ -67,18 +67,9 @@ func (e ErrorResponse) Error() string {
 type IAMAuthResponse struct {
 	Token     string `json:"client_token"`
 	Policies  []string
-	Metadata  AWSMetadata
+	Metadata  map[string]string
 	Duration  int `json:"lease_duration"`
 	Renewable bool
-}
-
-// AWSMetadata contains additional information about the ARN that was used to log in
-type AWSMetadata struct {
-	Region       string `json:"aws_region"`
-	PrincipalARN string `json:"iam_principal_arn"`
-	Username     string
-	IsAdmin      string `json:"is_admin"` // This is returned as a string from the API
-	Groups       string
 }
 
 // UserAuthResponse represents the response from the /v2/auth/user

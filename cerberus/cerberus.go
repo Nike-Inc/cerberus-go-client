@@ -148,7 +148,7 @@ func (c *Client) DoRequestWithBody(method, path string, params map[string]string
 	// refresh the token before returning
 	if resp.Header.Get("X-Refresh-Token") == "true" {
 		if err := c.Authentication.Refresh(); err != nil {
-			// logging here
+			return resp, fmt.Errorf("Error refreshing token: %v", err)
 		}
 		tok, err := c.Authentication.GetToken(nil)
 		if err != nil {

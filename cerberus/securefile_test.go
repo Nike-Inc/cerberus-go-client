@@ -49,7 +49,6 @@ var secureFileListReply = `{
   }`
 
 var secureFileListReplyTime, _ = time.Parse(time.RFC3339, "2018-06-14T10:34:55.057Z")
-
 var expectedResponse = &api.SecureFilesResponse{
 	HasNext:     false,
 	NextOffset:  0,

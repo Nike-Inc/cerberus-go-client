@@ -13,7 +13,6 @@ The simplest way to get started is to use the user authentication:
 ```go
 import (
 	"fmt"
-
 	"github.com/Nike-Inc/cerberus-go-client/cerberus"
 	"github.com/Nike-Inc/cerberus-go-client/auth"
 )
@@ -43,22 +42,21 @@ versions are not. The full list is below
 - `/v1/metadata`
 
 ### Authentication
-Cerberus supports 3 types of authentication, all of which are explained below. The auth types
-are designed to be used independently of the full Cerberus client if desired. This allows you
+Cerberus supports three types of authentication, which are explained below. The authentication types
+are designed to be used independently of the full Cerberus client if desired. This allows one
 to just get a token for use in other applications. There are also methods for returning a
 set of headers needed to authenticate to Cerberus. With all of the authentication types, `GetToken`
 triggers the actual authentication process for the given type.
 
-All 3 types support setting the URL for Cerberus using the `CERBERUS_URL` environment variable,
-which will always override anything you pass to the `New*Auth` methods.
+All three types support setting the URL for Cerberus using the `CERBERUS_URL` environment variable,
+which will always override anything passed to the `New*Auth` methods.
 
-#### AWS
-AWS authentication expects an IAM principal ARN and an AWS region to be able to authenticate.
-For more information, see the [API docs](https://github.com/Nike-Inc/cerberus-management-service/blob/master/API.md#app-login-v2-v2authiam-principal)
+#### STS
+STS authentication expects a Cerberus URL and an AWS region in order to authenticate.
 
 ```go
-authMethod, _ := auth.NewAWSAuth("https://cerberus.example.com", "arn:aws:iam::111111111:role/cerberus-api-tester", "us-west-2")
-tok, err := authMethod.GetToken(nil)
+authMethod, _ := auth.NewSTSAuth("https://cerberus.example.com", "us-west-2")
+token, err := authMethod.GetToken(nil)
 ```
 
 #### Token
@@ -66,12 +64,12 @@ Token authentication is meant to be used when there is already an existing Cerbe
 wish to use. No validation is done on the token, so if it is invalid or expired, method calls
 will likely return an `api.ErrorUnauthorized`.
 
-This method also allows you to set a token using the `CERBERUS_TOKEN` environment variable.
-Like `CERBERUS_URL`, this will override anything you pass to the `NewTokenAuth` method.
+This method also allows one to set a token using the `CERBERUS_TOKEN` environment variable.
+Like `CERBERUS_URL`, this will override anything passed to the `NewTokenAuth` method.
 
 ```go
-authMethod, _ := auth.NewTokenAuth("https://cerberus.example.com", "my-cool-token")
-tok, err := authMethod.GetToken(nil)
+authMethod, _ := auth.NewTokenAuth("https://cerberus.example.com", "token")
+token, err := authMethod.GetToken(nil)
 ```
 
 #### User
@@ -82,12 +80,12 @@ it will prompt for the MFA token.
 
 ```go
 authMethod, _ := auth.NewUserAuth("https://cerberus.example.com", "my-cerberus-user", "my-password")
-tok, err := authMethod.GetToken(nil)
+token, err := authMethod.GetToken(nil)
 ```
 
 ### Client
 Once you have an authentication method, you can pass it to `NewClient` along with an optional file argument
-for where to read the MFA token from. `NewClient` will take care of actually authenticating to Cerberus
+from which to read the MFA token from. `NewClient` will take care of actually authenticating to Cerberus.
 
 ```go
 client, err := cerberus.NewClient(authMethod, nil)
@@ -104,43 +102,35 @@ for _, v := range list {
 }
 ```
 
-For full information on every method, see the [Godoc]()
+For full information on every method, see the [Godoc]().
 
 ## Development
 
-### Code organization
-The code is broken up into 4 parts, including 3 subpackages. The top level package contains all of
-the code for the Cerberus client proper. A breakdown of all the subpackages follows:
+### Run Integration Tests
 
-#### API
-The `api` package contains all type definitions for API objects as well as common errors. It also contains
-API error handling methods
+First, make sure the following environment variables are set before running the Go Client integration tests:
 
-#### Auth
-The `auth` package contains implementations for all authentication types and the definition for the `Auth`
-interface that all authentication types must satisfy.
+``` bash
+    export TEST_CERBERUS_URL=https://example.cerberus.com
+    export TEST_REGION=us-west-2
+    export IAM_PRINCIPAL=arn:aws:iam::111111111:role/example-role
+    export USER_GROUP=example.user.group
+```
 
-#### Utils
-The `utils` package contains common methods used by the top level client and multiple subpackages. This
-**is not** meant to be a kitchen sink in which to throw things that don't belong.
+Then, make sure AWS credentials have been obtained. One method is by running [gimme-aws-creds](https://github.com/Nike-Inc/gimme-aws-creds):
 
-### Tests
-We use [GoConvey](https://github.com/smartystreets/goconvey) for our testing. There are plenty of tests
-in the code that you can use for examples
+```bash
+    gimme-aws-creds
+```
 
-### Contributing
-See the [CONTRIBUTING.md](CONTRIBUTING.md) document for more information on how to begin contributing.
-
-The tl;dr is that we encourage any PRs you'd like to submit. Please remember to keep your commits
-small and focused and try to write tests for any new features you add.
-
-## Roadmap
-All endpoints have been implemented with unit tests. The other major task remaining is to write
-integration tests.
+Next, in the project directory run:
+```bash
+    go test cerberus-go-client/integration
+```
 
 ### Known limitations
 Currently, this will only support one enrolled MFA device (the first one you enable). In the
-future we want to make this cleaner for CLI usage
+future we want to make this cleaner for CLI usage.
 
 ## Full example
 Below is a full, runnable example of how to use the Cerberus client with a simple CLI
@@ -213,6 +203,3 @@ func main() {
 }
 ```
 
-## Maintainers
-- [Taylor Thomas](https://github.com/thomastaylor312)
-- [Roger Ignazio](https://github.com/rji)

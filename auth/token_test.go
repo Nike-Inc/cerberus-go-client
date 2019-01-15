@@ -145,11 +145,11 @@ func TestIsAuthenticatedToken(t *testing.T) {
 func TestRefreshToken(t *testing.T) {
 	var testToken = "finn"
 	var expectedHeaders = map[string]string{
-		"X-Vault-Token":     testToken,
+		"X-Cerberus-Token":  testToken,
 		"X-Cerberus-Client": api.ClientHeader,
 	}
 	testHeaders := http.Header{}
-	testHeaders.Add("X-Vault-Token", testToken)
+	testHeaders.Add("X-Cerberus-Token", testToken)
 	testHeaders.Add("X-Cerberus-Client", api.ClientHeader)
 	Convey("A valid TokenAuth", t, TestingServer(http.StatusOK, "/v2/auth/user/refresh", http.MethodGet, authResponseBody, expectedHeaders, func(ts *httptest.Server) {
 		tok, err := NewTokenAuth(ts.URL, testToken)
@@ -187,11 +187,11 @@ func TestRefreshToken(t *testing.T) {
 func TestLogoutToken(t *testing.T) {
 	var testToken = "bb-8"
 	var expectedHeaders = map[string]string{
-		"X-Vault-Token":     testToken,
+		"X-Cerberus-Token":  testToken,
 		"X-Cerberus-Client": api.ClientHeader,
 	}
 	testHeaders := http.Header{}
-	testHeaders.Add("X-Vault-Token", testToken)
+	testHeaders.Add("X-Cerberus-Token", testToken)
 	testHeaders.Add("X-Cerberus-Client", api.ClientHeader)
 	Convey("A valid TokenAuth", t, TestingServer(http.StatusNoContent, "/v1/auth", http.MethodDelete, "", expectedHeaders, func(ts *httptest.Server) {
 		tok, err := NewTokenAuth(ts.URL, testToken)
@@ -234,7 +234,7 @@ func TestGetHeadersToken(t *testing.T) {
 			headers, err := tok.GetHeaders()
 			So(err, ShouldBeNil)
 			So(headers, ShouldNotBeNil)
-			So(headers.Get("X-Vault-Token"), ShouldContainSubstring, "x-wing")
+			So(headers.Get("X-Cerberus-Token"), ShouldContainSubstring, "x-wing")
 		})
 	})
 

@@ -37,10 +37,9 @@ const expiryDelta time.Duration = 60 * time.Second
 // The Auth interface describes the methods that all authentication providers must satisfy
 type Auth interface {
 	// GetToken should either return an existing token or perform all authentication steps
-	// necessary to get a new token. It takes a file object as an argument as a place to
-	// read an OTP for MFA flow
+	// necessary to get a new token.
 	GetToken(*os.File) (string, error)
-	// IsAuthenticated should return whether or not there is a valid token. A valid token
+	//IsAuthenticated should return whether or not there is a valid token. A valid token
 	// is one that exists and is not expired
 	IsAuthenticated() bool
 	// Refresh uses the current valid token to retrieve a new one
@@ -74,7 +73,7 @@ func Refresh(builtURL url.URL, headers http.Header) (*api.UserAuthResponse, erro
 	return r, nil
 }
 
-// Logout takes a set of headers containing a vault token and a URL and logs out of Cerberus.
+// Logout takes a set of headers containing a token and a URL and logs out of Cerberus.
 func Logout(builtURL url.URL, headers http.Header) error {
 	builtURL.Path = "/v1/auth"
 	req, err := http.NewRequest("DELETE", builtURL.String(), nil)

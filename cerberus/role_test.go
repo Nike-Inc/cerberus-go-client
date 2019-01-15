@@ -22,8 +22,8 @@ import (
 	"testing"
 	"time"
 
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/Nike-Inc/cerberus-go-client/api"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 var listResponse = `[

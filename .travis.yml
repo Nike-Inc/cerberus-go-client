@@ -1,17 +1,13 @@
 sudo: false
 language: go
 go:
-- 1.8.3
+- 1.11.4
 before_install:
-- go get github.com/Masterminds/glide
+- curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 - if [ ! -d $CODE_DIRECTORY ]; then mkdir -p $HOME/gopath/src/github.com/Nike-Inc; ln -s $TRAVIS_BUILD_DIR $CODE_DIRECTORY; fi # CI for forks
 env:
   global:
-  - GLIDE_HOME="${HOME}/.glide"
   - CODE_DIRECTORY=$HOME/gopath/src/github.com/Nike-Inc/cerberus-go-client
-install:
-- cd $CODE_DIRECTORY # change dir into source
-- make bootstrap
 script:
 - cd $CODE_DIRECTORY # change dir into source
 - make test 2>&1 # Run tests

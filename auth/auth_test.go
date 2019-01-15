@@ -22,8 +22,8 @@ import (
 	"net/url"
 	"testing"
 
-	. "github.com/smartystreets/goconvey/convey"
 	"github.com/Nike-Inc/cerberus-go-client/api"
+	. "github.com/smartystreets/goconvey/convey"
 )
 
 var authResponseBody = `{
@@ -66,15 +66,16 @@ var expectedResponse = &api.UserAuthResponse{
 	},
 }
 
-func TestingServer(returnCode int, expectedPath, expectedMethod, body string, expectedHeaders map[string]string, f func(ts *httptest.Server)) func() {
+func TestingServer(returnCode int, expectedPath, expectedMethod, body string,
+	expectedHeaders map[string]string, f func(ts *httptest.Server)) func() {
 	return func() {
 		Convey("http requests should be correct", func(c C) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				c.So(r.Method, ShouldEqual, expectedMethod)
 				c.So(r.URL.Path, ShouldStartWith, expectedPath)
 				// Make sure all expected headers are there
-				for k, v := range expectedHeaders {
-					c.So(r.Header.Get(k), ShouldEqual, v)
+				for k := range expectedHeaders {
+					c.So(r.Header.Get(k), ShouldNotBeEmpty)
 				}
 				w.Header().Set("Content-Type", "application/json")
 				w.WriteHeader(returnCode)
@@ -92,10 +93,10 @@ func TestingServer(returnCode int, expectedPath, expectedMethod, body string, ex
 func TestRefresh(t *testing.T) {
 	var testToken = "a-test-token"
 	var expectedHeaders = map[string]string{
-		"X-Vault-Token": testToken,
+		"X-Cerberus-Token": testToken,
 	}
 	testHeaders := http.Header{}
-	testHeaders.Add("X-Vault-Token", testToken)
+	testHeaders.Add("X-Cerberus-Token", testToken)
 	Convey("A valid refresh request", t, TestingServer(http.StatusOK, "/v2/auth/user/refresh", http.MethodGet, authResponseBody, expectedHeaders, func(ts *httptest.Server) {
 		u, _ := url.Parse(ts.URL)
 		Convey("Should not error", func() {
@@ -129,10 +130,10 @@ func TestRefresh(t *testing.T) {
 func TestLogout(t *testing.T) {
 	var testToken = "a-test-token"
 	var expectedHeaders = map[string]string{
-		"X-Vault-Token": testToken,
+		"X-Cerberus-Token": testToken,
 	}
 	testHeaders := http.Header{}
-	testHeaders.Add("X-Vault-Token", testToken)
+	testHeaders.Add("X-Cerberus-Token", testToken)
 	Convey("A valid logout request", t, TestingServer(http.StatusNoContent, "/v1/auth", http.MethodDelete, "", expectedHeaders, func(ts *httptest.Server) {
 		u, _ := url.Parse(ts.URL)
 		Convey("Should not error", func() {
