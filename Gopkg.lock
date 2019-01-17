@@ -2,20 +2,7 @@
 
 
 [[projects]]
-  digest = "1:76f2bb8903f1385665ce750f2d09010acdc6bd95f714293a2477f053db8b85df"
-  name = "github.com/Nike-Inc/cerberus-go-client"
-  packages = [
-    "api",
-    "auth",
-    "cerberus",
-    "utils",
-  ]
-  pruneopts = "UT"
-  revision = "3b456493257225ca9d207342c9d846e4e9aaaa89"
-  version = "v0.4.0"
-
-[[projects]]
-  digest = "1:85b6071626bf29a97bd2cd82d63b28a6f99171b9138a5ecf06cca360d57f3358"
+  digest = "1:d94007a6bff7ea6c9dc30bf9799edae6c10a72ca00844ad992c22c6015310753"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -27,14 +14,10 @@
     "aws/credentials",
     "aws/credentials/ec2rolecreds",
     "aws/credentials/endpointcreds",
-    "aws/credentials/processcreds",
-    "aws/credentials/stscreds",
-    "aws/csm",
     "aws/defaults",
     "aws/ec2metadata",
     "aws/endpoints",
     "aws/request",
-    "aws/session",
     "aws/signer/v4",
     "internal/ini",
     "internal/sdkio",
@@ -42,19 +25,11 @@
     "internal/sdkuri",
     "internal/shareddefaults",
     "private/protocol",
-    "private/protocol/json/jsonutil",
-    "private/protocol/jsonrpc",
-    "private/protocol/query",
-    "private/protocol/query/queryutil",
     "private/protocol/rest",
-    "private/protocol/xml/xmlutil",
-    "service/kms",
-    "service/kms/kmsiface",
-    "service/sts",
   ]
   pruneopts = "UT"
-  revision = "aabf189db35ba7eb5a35afe6d681fc0f70954fca"
-  version = "v1.16.18"
+  revision = "3afa899153ab972b5e6bf2552721b677e3fdaeb5"
+  version = "v1.16.20"
 
 [[projects]]
   branch = "master"
@@ -110,12 +85,12 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:4112546e6964796e1c92a9ffdea8fd7ae81ffbf81eda4f946f50937e178f53da"
+  digest = "1:ff41a98e14bb578ecb9be42c98bcb0465e158988a1f6637a1fcd8c52522068e7"
   name = "github.com/hashicorp/go-retryablehttp"
   packages = ["."]
   pruneopts = "UT"
-  revision = "4502c0ecdaf0b50d857611af23831260f99be6bf"
-  version = "v0.5.0"
+  revision = "d3a63d3c72068412f9ecd7c36faafd874d2e2888"
+  version = "v0.5.1"
 
 [[projects]]
   branch = "master"
@@ -152,7 +127,7 @@
   version = "v1.0.0"
 
 [[projects]]
-  digest = "1:ac52144f192f9c6a37ac9d0abdb9c837da80446a25a881db2b63c04e1259bd8a"
+  digest = "1:5b9aac5494a84e9e098d31ae0b6ef87983998b500f8bb08de0656712e7f81b1d"
   name = "github.com/hashicorp/vault"
   packages = [
     "api",
@@ -164,8 +139,8 @@
     "helper/strutil",
   ]
   pruneopts = "UT"
-  revision = "08df121c8b9adcc2b8fd55fc8506c3f9714c7e61"
-  version = "v1.0.1"
+  revision = "37a1dc9c477c1c68c022d2084550f25bf20cac33"
+  version = "v1.0.2"
 
 [[projects]]
   digest = "1:bb81097a5b62634f3e9fec1014657855610c82d19b9a40c17612e32651e35dca"
@@ -297,10 +272,6 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/Nike-Inc/cerberus-go-client/api",
-    "github.com/Nike-Inc/cerberus-go-client/auth",
-    "github.com/Nike-Inc/cerberus-go-client/cerberus",
-    "github.com/Nike-Inc/cerberus-go-client/utils",
     "github.com/aws/aws-sdk-go/aws/credentials",
     "github.com/aws/aws-sdk-go/aws/defaults",
     "github.com/aws/aws-sdk-go/aws/endpoints",
