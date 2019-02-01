@@ -124,7 +124,7 @@ func (a *STSAuth) authenticate() error {
 
 	a.token = authResponse.Token
 	a.headers.Set("X-Cerberus-Token", authResponse.Token)
-	a.expiry = time.Now().Add(time.Duration(authResponse.Duration) * time.Second)
+	a.expiry = time.Now().Add((time.Duration(authResponse.Duration) * time.Second) - expiryDelta)
 	return nil
 }
 
