@@ -83,6 +83,15 @@ func (a *STSAuth) GetToken(*os.File) (string, error) {
 	return a.token, err
 }
 
+// GetExpiry returns the expiry time of the token if it already exists. Otherwise,
+// it returns a zero-valued time.Time struct and an error.
+func (a *STSAuth) GetExpiry(*os.File) (time.Time, error) {
+	if len(a.token) > 0 {
+		return a.expiry, nil
+	}
+	return time.Time{}, fmt.Errorf("Expiry time not set.")
+}
+
 func (a *STSAuth) authenticate() error {
 	builtURL := *a.baseURL
 	builtURL.Path = "v2/auth/sts-identity"

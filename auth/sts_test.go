@@ -171,6 +171,31 @@ func TestGetTokenSTS(t *testing.T) {
 		}))
 }
 
+func TestGetExpiry(t *testing.T) {
+	Convey("A valid STSAuth", t, func() {
+		a, err := NewSTSAuth("https://test.example.com", "us-west-2")
+		So(err, ShouldBeNil)
+		So(a, ShouldNotBeNil)
+		a.expiry = time.Now()
+		a.token = "token"
+		Convey("Should return an expiry time", func() {
+			exp, err := a.GetExpiry(nil)
+			So(exp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+		})
+	})
+	Convey("An unauthenticated STSAuth", t, func() {
+		a, err := NewSTSAuth("https://test.example.com", "us-west-2")
+		So(err, ShouldBeNil)
+		So(a, ShouldNotBeNil)
+		Convey("Should return an error", func() {
+			exp, err := a.GetExpiry(nil)
+			So(exp, ShouldBeZeroValue)
+			So(err, ShouldNotBeNil)
+		})
+	})
+}
+
 func TestIsAuthenticated(t *testing.T) {
 	Convey("A valid STSAuth", t, func() {
 		a, err := NewSTSAuth("https://test.example.com", "us-west-2")
