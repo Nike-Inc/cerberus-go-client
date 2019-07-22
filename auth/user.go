@@ -89,6 +89,15 @@ func (u *UserAuth) GetToken(f *os.File) (string, error) {
 	return u.token, nil
 }
 
+// GetExpiry returns the expiry time of the token if it already exists. Otherwise,
+// it returns a zero-valued time.Time struct and an error.
+func (u *UserAuth) GetExpiry() (time.Time, error) {
+	if len(u.token) > 0 {
+		return u.expiry, nil
+	}
+	return time.Time{}, fmt.Errorf("Expiry time not set")
+}
+
 // GetURL returns the URL used for Cerberus
 func (u *UserAuth) GetURL() *url.URL {
 	return u.baseURL

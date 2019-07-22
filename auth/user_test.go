@@ -132,6 +132,33 @@ func TestGetURLUser(t *testing.T) {
 	})
 }
 
+func TestGetExpiryUser(t *testing.T) {
+	Convey("A valid client", t, func() {
+		c, err := NewUserAuth("http://example.com", "user", "pass")
+		So(c, ShouldNotBeNil)
+		So(err, ShouldBeNil)
+		c.token = "token"
+		c.expiry = time.Now()
+		Convey("Should return an expiry time", func() {
+			exp, err := c.GetExpiry()
+			So(exp, ShouldNotBeNil)
+			So(err, ShouldBeNil)
+		})
+	})
+	Convey("An invalid client", t, func() {
+		c, err := NewUserAuth("http://example.com", "user", "pass")
+		So(c, ShouldNotBeNil)
+		So(err, ShouldBeNil)
+		c.token = ""
+		c.expiry = time.Now()
+		Convey("Should return an error", func() {
+			exp, err := c.GetExpiry()
+			So(exp, ShouldBeZeroValue)
+			So(err, ShouldNotBeNil)
+		})
+	})
+}
+
 func WithServer(status api.AuthStatus, returnCode int, token, expectedPath, expectedMethod string, expectedHeaders map[string]string, f func(ts *httptest.Server)) func() {
 	return func() {
 		Convey("http requests should be correct", func(c C) {

@@ -25,6 +25,7 @@ import (
 	"net/url"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/Nike-Inc/cerberus-go-client/api"
 	. "github.com/smartystreets/goconvey/convey"
@@ -84,6 +85,10 @@ func (m *MockAuth) GetHeaders() (http.Header, error) {
 
 func (m *MockAuth) GetURL() *url.URL {
 	return m.baseURL
+}
+
+func (m *MockAuth) GetExpiry() (time.Time, error) {
+	return time.Now(), nil
 }
 
 func TestNewCerberusClient(t *testing.T) {
