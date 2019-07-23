@@ -51,6 +51,9 @@ type Auth interface {
 	// the authorization header set with the proper token
 	GetHeaders() (http.Header, error)
 	GetURL() *url.URL
+	// GetExpiry either returns the expiry time of an existing token, or a zero-valued
+	// time.Time struct and an error if a token doesn't exist
+	GetExpiry() (time.Time, error)
 }
 
 // Refresh contains logic for refreshing a token against the API. Because

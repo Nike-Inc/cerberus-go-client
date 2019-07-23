@@ -179,7 +179,7 @@ func TestGetExpiry(t *testing.T) {
 		a.expiry = time.Now()
 		a.token = "token"
 		Convey("Should return an expiry time", func() {
-			exp, err := a.GetExpiry(nil)
+			exp, err := a.GetExpiry()
 			So(exp, ShouldNotBeNil)
 			So(err, ShouldBeNil)
 		})
@@ -189,7 +189,7 @@ func TestGetExpiry(t *testing.T) {
 		So(err, ShouldBeNil)
 		So(a, ShouldNotBeNil)
 		Convey("Should return an error", func() {
-			exp, err := a.GetExpiry(nil)
+			exp, err := a.GetExpiry()
 			So(exp, ShouldBeZeroValue)
 			So(err, ShouldNotBeNil)
 		})

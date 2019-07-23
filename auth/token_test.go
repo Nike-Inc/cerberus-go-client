@@ -262,3 +262,27 @@ func TestGetURLToken(t *testing.T) {
 		})
 	})
 }
+
+func TestGetExpiryToken(t *testing.T) {
+	Convey("A valid TokenAuth", t, func() {
+		tok, err := NewTokenAuth("https://test.example.com", "token")
+		So(err, ShouldBeNil)
+		So(tok, ShouldNotBeNil)
+		Convey("Should return zero value expiry and non-nil error", func() {
+			exp, err := tok.GetExpiry()
+			So(exp, ShouldBeZeroValue)
+			So(err, ShouldNotBeNil)
+		})
+	})
+	Convey("A logged out TokenAuth", t, func() {
+		tok, err := NewTokenAuth("https://test.example.com", "token")
+		So(err, ShouldBeNil)
+		So(tok, ShouldNotBeNil)
+		tok.token = ""
+		Convey("Should return zero value expiry and non-nil error", func() {
+			exp, err := tok.GetExpiry()
+			So(exp, ShouldBeZeroValue)
+			So(err, ShouldNotBeNil)
+		})
+	})
+}

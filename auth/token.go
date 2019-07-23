@@ -21,6 +21,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/Nike-Inc/cerberus-go-client/api"
 	"github.com/Nike-Inc/cerberus-go-client/utils"
@@ -130,4 +131,9 @@ func (t *TokenAuth) GetHeaders() (http.Header, error) {
 // GetURL returns the URL for cerberus
 func (t *TokenAuth) GetURL() *url.URL {
 	return t.baseURL
+}
+
+// Always return zero-valued time.Time struct and a non-nil error
+func (t *TokenAuth) GetExpiry() (time.Time, error) {
+	return time.Time{}, fmt.Errorf("Expiry time not set")
 }

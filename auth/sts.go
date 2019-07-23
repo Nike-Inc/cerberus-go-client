@@ -85,7 +85,7 @@ func (a *STSAuth) GetToken(*os.File) (string, error) {
 
 // GetExpiry returns the expiry time of the token if it already exists. Otherwise,
 // it returns a zero-valued time.Time struct and an error.
-func (a *STSAuth) GetExpiry(*os.File) (time.Time, error) {
+func (a *STSAuth) GetExpiry() (time.Time, error) {
 	if len(a.token) > 0 {
 		return a.expiry, nil
 	}
