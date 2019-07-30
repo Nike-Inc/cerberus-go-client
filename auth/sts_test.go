@@ -142,7 +142,7 @@ func TestGetTokenSTS(t *testing.T) {
 			os.Setenv("AWS_SECRET_ACCESS_KEY", "secret")
 			Convey("Should error with invalid login", func() {
 				tok, err := a.GetToken(nil)
-				So(err, ShouldEqual, api.ErrorUnauthorized)
+				So(err, ShouldNotBeNil)
 				So(tok, ShouldBeEmpty)
 			})
 		}))
