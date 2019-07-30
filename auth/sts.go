@@ -118,7 +118,8 @@ func (a *STSAuth) authenticate() error {
 	defer response.Body.Close()
 
 	if response.StatusCode == http.StatusUnauthorized || response.StatusCode == http.StatusForbidden {
-		return api.ErrorUnauthorized
+		return fmt.Errorf("Invalid credentials given. Verify that the role you are currently using is valid " +
+			"with the AWS CLI ($ aws sts get-caller-identity) or with gimme-aws-creds.")
 	}
 	if response.StatusCode != http.StatusOK {
 		return fmt.Errorf("Error while trying to authenticate. Got HTTP response code %d", response.StatusCode)
