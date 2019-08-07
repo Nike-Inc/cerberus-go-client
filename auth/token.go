@@ -36,18 +36,8 @@ type TokenAuth struct {
 
 // NewTokenAuth takes a Cerberus URL and valid token and returns a new TokenAuth.
 // There is no checking done on whether or not the token is valid, so the function
-// expects the a valid token. The URL and token can also be set using the CERBERUS_URL
-// and CERBERUS_TOKEN environment variables. These will always take precedence over
-// any arguments to the function
+// expects the a valid token.
 func NewTokenAuth(cerberusURL, token string) (*TokenAuth, error) {
-	// Check for the environment variable if the user has set it
-	if os.Getenv("CERBERUS_URL") != "" {
-		cerberusURL = os.Getenv("CERBERUS_URL")
-	}
-	// Check for the environment variable for the token if the user has set it
-	if os.Getenv("CERBERUS_TOKEN") != "" {
-		token = os.Getenv("CERBERUS_TOKEN")
-	}
 	// Make sure that the passed variables are not empty
 	if len(cerberusURL) == 0 {
 		return nil, fmt.Errorf("Cerberus URL cannot be empty")

@@ -49,20 +49,6 @@ func TestNewSTSAuth(t *testing.T) {
 			So(a, ShouldNotBeNil)
 		})
 	})
-	Convey("Cerberus URL set by environment variable", t, func() {
-		os.Setenv("CERBERUS_URL", "https://test.example.com")
-		a, err := NewSTSAuth("https://test.example.com", "us-east-1")
-		Convey("Should return a valid STSAuth", func() {
-			So(err, ShouldBeNil)
-			So(a, ShouldNotBeNil)
-			Convey("And should set the URL", func() {
-				So(a.baseURL.String(), ShouldEqual, "https://test.example.com")
-			})
-		})
-		Reset(func() {
-			os.Unsetenv("CERBERUS_URL")
-		})
-	})
 	Convey("An empty URL", t, func() {
 		a, err := NewSTSAuth("", "us-east-1")
 		Convey("Should error", func() {

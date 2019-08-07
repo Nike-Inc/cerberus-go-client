@@ -48,9 +48,6 @@ to just get a token for use in other applications. There are also methods for re
 set of headers needed to authenticate to Cerberus. With all of the authentication types, `GetToken`
 triggers the actual authentication process for the given type.
 
-All three types support setting the URL for Cerberus using the `CERBERUS_URL` environment variable,
-which will always override anything passed to the `New*Auth` methods.
-
 #### STS
 STS authentication expects a Cerberus URL and an AWS region in order to authenticate.
 
@@ -64,22 +61,8 @@ Token authentication is meant to be used when there is already an existing Cerbe
 wish to use. No validation is done on the token, so if it is invalid or expired, method calls
 will likely return an `api.ErrorUnauthorized`.
 
-This method also allows one to set a token using the `CERBERUS_TOKEN` environment variable.
-Like `CERBERUS_URL`, this will override anything passed to the `NewTokenAuth` method.
-
 ```go
 authMethod, _ := auth.NewTokenAuth("https://cerberus.example.com", "token")
-token, err := authMethod.GetToken(nil)
-```
-
-#### User
-User authentication is for using a username and password (with optional MFA) to log in to Cerberus.
-There are some [known limitations](#known-limitations) with MFA. The `GetToken` method takes an `*os.File`
-argument that expects a file with one line containing the MFA token to use. Otherwise, if `nil` is passed
-it will prompt for the MFA token.
-
-```go
-authMethod, _ := auth.NewUserAuth("https://cerberus.example.com", "my-cerberus-user", "my-password")
 token, err := authMethod.GetToken(nil)
 ```
 

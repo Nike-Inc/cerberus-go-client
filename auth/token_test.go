@@ -19,7 +19,6 @@ package auth
 import (
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"testing"
 
 	"github.com/Nike-Inc/cerberus-go-client/api"
@@ -36,38 +35,6 @@ func TestNewTokenAuth(t *testing.T) {
 				So(tok.baseURL.String(), ShouldEqual, "https://test.example.com")
 				So(tok.token, ShouldEqual, "kylo-ren")
 			})
-		})
-	})
-
-	Convey("Cerberus URL set by environment variable", t, func() {
-		os.Setenv("CERBERUS_URL", "https://test.example.com")
-		tok, err := NewTokenAuth("", "snoke")
-		Convey("Should return a valid TokenAuth", func() {
-			So(err, ShouldBeNil)
-			So(tok, ShouldNotBeNil)
-			Convey("And should set the URL", func() {
-				So(tok.baseURL.String(), ShouldEqual, "https://test.example.com")
-				So(tok.token, ShouldEqual, "snoke")
-			})
-		})
-		Reset(func() {
-			os.Unsetenv("CERBERUS_URL")
-		})
-	})
-
-	Convey("Cerberus token set by environment variable", t, func() {
-		os.Setenv("CERBERUS_TOKEN", "starkiller-base")
-		tok, err := NewTokenAuth("https://test.example.com", "")
-		Convey("Should return a valid TokenAuth", func() {
-			So(err, ShouldBeNil)
-			So(tok, ShouldNotBeNil)
-			Convey("And should set the URL", func() {
-				So(tok.baseURL.String(), ShouldEqual, "https://test.example.com")
-				So(tok.token, ShouldEqual, "starkiller-base")
-			})
-		})
-		Reset(func() {
-			os.Unsetenv("CERBERUS_TOKEN")
 		})
 	})
 
