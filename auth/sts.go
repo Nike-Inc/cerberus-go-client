@@ -41,15 +41,10 @@ type STSAuth struct {
 	headers http.Header
 }
 
-// NewSTSAuth returns an STSAuth given a valid URL and region. If the CERBERUS_URL
-// environment variable is set, it will be used over what is passed to this function.
+// NewSTSAuth returns an STSAuth given a valid URL and region.
 // Valid AWS credentials configured either by environment or through a credentials
 // config file are also required.
 func NewSTSAuth(cerberusURL, region string) (*STSAuth, error) {
-	// Check for the environment variable if the user has set it
-	if os.Getenv("CERBERUS_URL") != "" {
-		cerberusURL = os.Getenv("CERBERUS_URL")
-	}
 	if len(region) == 0 {
 		return nil, fmt.Errorf("Region cannot be empty")
 	}
