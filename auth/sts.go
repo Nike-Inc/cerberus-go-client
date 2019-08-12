@@ -117,7 +117,8 @@ func (a *STSAuth) authenticate() error {
 			"with the AWS CLI ($ aws sts get-caller-identity) or with gimme-aws-creds.")
 	}
 	if response.StatusCode != http.StatusOK {
-		return fmt.Errorf("Error while trying to authenticate. Got HTTP response code %d", response.StatusCode)
+		apiErr := utils.ParseAPIError(response.Body)
+		return fmt.Errorf("Error while trying to authenticate. Got HTTP response code %d\n%v", response.StatusCode, apiErr)
 	}
 
 	decoder := json.NewDecoder(response.Body)

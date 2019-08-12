@@ -21,6 +21,7 @@ import (
 	"net/http"
 
 	"github.com/Nike-Inc/cerberus-go-client/api"
+	"github.com/Nike-Inc/cerberus-go-client/utils"
 )
 
 // Metadata is a subclient for accessing the metadata endpoint
@@ -57,7 +58,7 @@ func (m *Metadata) List(opts MetadataOpts) (*api.MetadataResponse, error) {
 	// Check if it is a bad request (improperly set params)
 	if resp.StatusCode == http.StatusBadRequest {
 		// Return the API error to the user
-		return nil, handleAPIError(resp.Body)
+		return nil, utils.ParseAPIError(resp.Body)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("Error while trying to GET metadata. Got HTTP status code %d", resp.StatusCode)

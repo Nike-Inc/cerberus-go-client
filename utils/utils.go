@@ -20,6 +20,7 @@ package utils
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 
@@ -58,4 +59,25 @@ func CheckAndParse(resp *http.Response) (*api.UserAuthResponse, error) {
 		return nil, fmt.Errorf("Error while trying to parse response from Cerberus: %v", err)
 	}
 	return u, nil
+}
+
+var ErrorBodyNotReturned = fmt.Errorf("No error body returned from server")
+
+// utils.ParseAPIError is a helper for parsing an error response body from the API.
+// If the body doesn't have an error, it will return ErrorBodyNotReturned to indicate that there was no error body sent (probably means there was a server error)
+func ParseAPIError(r io.Reader) error {
+	var apiErr = api.ErrorResponse{}
+	if err := json.NewDecoder(r).Decode(&apiErr); err != nil {
+		// If the body is empty or a string, it will hit this error
+		if err == io.EOF {
+			return ErrorBodyNotReturned
+		}
+		return fmt.Errorf("Error while parsing API error response: %v", err)
+	}
+	// Check to see if there is an error ID set and return a different error if not
+	// This is here because if there is a json body, it will parse it as valid and won't error
+	if apiErr.ErrorID == "" {
+		return ErrorBodyNotReturned
+	}
+	return apiErr
 }

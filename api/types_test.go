@@ -38,7 +38,7 @@ func TestErrorResponse(t *testing.T) {
 	Convey("A valid ErrorResponse Error method call", t, func() {
 		stringErr := fakeError.Error()
 		Convey("Should give a valid string", func() {
-			So(stringErr, ShouldStartWith, "Error from API. ID: test-error-id")
+			So(stringErr, ShouldStartWith, "Error from API. Error ID: test-error-id")
 		})
 	})
 }
