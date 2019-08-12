@@ -28,7 +28,6 @@ import (
 	"time"
 
 	"github.com/Nike-Inc/cerberus-go-client/api"
-	"github.com/Nike-Inc/cerberus-go-client/utils"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
