@@ -60,7 +60,7 @@ type ErrorDetail struct {
 }
 
 func (e ErrorResponse) Error() string {
-	return fmt.Sprintf("Error from API. ID: %s, Details: %+v", e.ErrorID, e.Errors)
+	return fmt.Sprintf("Error from API. Error ID: %s, Details: %+v", e.ErrorID, e.Errors)
 }
 
 // IAMAuthResponse represents a response from the iam-principal authentication endpoint
