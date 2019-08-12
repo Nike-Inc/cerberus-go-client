@@ -18,6 +18,7 @@ package cerberus
 
 import (
 	"fmt"
+	"github.com/Nike-Inc/cerberus-go-client/utils"
 	"net/http"
 	"strings"
 
@@ -117,11 +118,11 @@ func (s *SDB) Create(newSDB *api.SafeDepositBox) (*api.SafeDepositBox, error) {
 
 	if resp.StatusCode == http.StatusBadRequest {
 		// Return the API error to the user
-		return nil, handleAPIError(resp.Body)
+		return nil, utils.ParseAPIError(resp.Body)
 	}
 	// If it isn't a bad request, make sure it is a good request and return an error if it isn't
 	if resp.StatusCode != http.StatusCreated {
-		apiErr := handleAPIError(resp.Body)
+		apiErr := utils.ParseAPIError(resp.Body)
 		if apiErr == ErrorBodyNotReturned {
 			return nil, fmt.Errorf("Error while creating SDB. Got HTTP status code %d. %v", resp.StatusCode, apiErr)
 		}
@@ -157,10 +158,10 @@ func (s *SDB) Update(id string, updatedSDB *api.SafeDepositBox) (*api.SafeDeposi
 	}
 	if resp.StatusCode == http.StatusBadRequest {
 		// Return the API error to the user
-		return nil, handleAPIError(resp.Body)
+		return nil, utils.ParseAPIError(resp.Body)
 	}
 	if resp.StatusCode != http.StatusOK {
-		apiErr := handleAPIError(resp.Body)
+		apiErr := utils.ParseAPIError(resp.Body)
 		if apiErr == ErrorBodyNotReturned {
 			return nil, fmt.Errorf("Error while updating SDB. Got HTTP status code %d. %v", resp.StatusCode, apiErr)
 		}
@@ -193,7 +194,7 @@ func (s *SDB) Delete(id string) error {
 		return ErrorSafeDepositBoxNotFound
 	}
 	if resp.StatusCode != http.StatusOK {
-		apiErr := handleAPIError(resp.Body)
+		apiErr := utils.ParseAPIError(resp.Body)
 		if apiErr == ErrorBodyNotReturned {
 			return fmt.Errorf("Error while deleting SDB. Got HTTP status code %d. %v", resp.StatusCode, apiErr)
 		}

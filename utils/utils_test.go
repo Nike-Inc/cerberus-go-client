@@ -17,6 +17,7 @@ limitations under the License.
 package utils
 
 import (
+	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -179,6 +180,58 @@ func TestCheckAndParse(t *testing.T) {
 			authResp, err := CheckAndParse(resp)
 			So(err, ShouldNotBeNil)
 			So(authResp, ShouldBeNil)
+		})
+	})
+}
+
+func TestHandleAPIError(t *testing.T) {
+	Convey("Valid error body", t, func() {
+		buf := bytes.NewBuffer([]byte(`{
+	"error_id": "a041aa4d-1d5a-4eed-8e8a-6dc18bdf96db",
+	"errors": [{
+		"code": 99208,
+		"message": "The name may not be blank.",
+		"metadata": {
+			"field": "name"
+		}
+	}]
+}`))
+		expected := api.ErrorResponse{
+			ErrorID: "a041aa4d-1d5a-4eed-8e8a-6dc18bdf96db",
+			Errors: []api.ErrorDetail{
+				api.ErrorDetail{
+					Code:    99208,
+					Message: "The name may not be blank.",
+					Metadata: map[string]interface{}{
+						"field": "name",
+					},
+				},
+			},
+		}
+		err := ParseAPIError(buf)
+		Convey("Should parse correctly", func() {
+			So(err, ShouldNotBeNil)
+			So(err, ShouldResemble, expected)
+		})
+	})
+	Convey("Empty body", t, func() {
+		buf := bytes.NewBuffer([]byte(""))
+		err := ParseAPIError(buf)
+		Convey("Should have a normal error response", func() {
+			So(err, ShouldNotBeNil)
+			So(err, ShouldEqual, ErrorBodyNotReturned)
+		})
+	})
+	Convey("Invalid JSON object", t, func() {
+		buf := bytes.NewBuffer([]byte(`{
+			"id": 1,
+			"name": "weirdobj"
+		`))
+		err := ParseAPIError(buf)
+		Convey("Should have a normal error response", func() {
+			So(err, ShouldNotBeNil)
+			So(err, ShouldNotHaveSameTypeAs, api.ErrorResponse{})
+			So(err, ShouldNotEqual, ErrorBodyNotReturned)
 		})
 	})
 }

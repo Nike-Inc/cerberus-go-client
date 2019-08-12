@@ -25,7 +25,6 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/Nike-Inc/cerberus-go-client/api"
 	"github.com/Nike-Inc/cerberus-go-client/auth"
 	vault "github.com/hashicorp/vault/api"
 )
@@ -185,21 +184,4 @@ func parseResponse(r io.Reader, parseTo interface{}) error {
 	return json.NewDecoder(r).Decode(parseTo)
 }
 
-// handleAPIError is a helper for parsing an error response body from the API.
-// If the body doesn't have an error, it will return ErrorBodyNotReturned to indicate that there was no error body sent (probably means there was a server error)
-func handleAPIError(r io.Reader) error {
-	var apiErr = api.ErrorResponse{}
-	if err := json.NewDecoder(r).Decode(&apiErr); err != nil {
-		// If the body is empty or a string, it will hit this error
-		if err == io.EOF {
-			return ErrorBodyNotReturned
-		}
-		return fmt.Errorf("Error while parsing API error response: %v", err)
-	}
-	// Check to see if there is an error ID set and return a different error if not
-	// This is here because if there is a json body, it will parse it as valid and won't error
-	if apiErr.ErrorID == "" {
-		return ErrorBodyNotReturned
-	}
-	return apiErr
-}
+
