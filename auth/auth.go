@@ -19,6 +19,7 @@ limitations under the License.
 // to get a login token or manage authentication without having to set up a full client
 package auth
 
+
 import (
 	"fmt"
 	"net/http"
@@ -33,6 +34,7 @@ import (
 // expiryDelta is the amount of time to subtract from the expiry time to compensate for
 // network request time and clock skew
 const expiryDelta time.Duration = 60 * time.Second
+const cerberusClientHeader string = "X-Cerberus-Client"
 
 // The Auth interface describes the methods that all authentication providers must satisfy
 type Auth interface {
@@ -49,14 +51,17 @@ type Auth interface {
 	// GetHeaders is a helper for any client using the authentication strategy.
 	// It returns a basic set of headers asking for a JSON response and has
 	// the authorization header set with the proper token
-	GetHeaders() (http.Header, error)
+	GetHeaders(clientHeaderValue string) (http.Header, error)
 	GetURL() *url.URL
 	// GetExpiry either returns the expiry time of an existing token, or a zero-valued
 	// time.Time struct and an error if a token doesn't exist
 	GetExpiry() (time.Time, error)
 }
 
-func GetHeaders(headers http.Header) (http.Header, error) {
+func GetHeaders(clientHeaderValue string) (http.Header, error) {
+	var headers http.Header
+	var xCerberusClientHeaderValue = fmt.Sprintf("%s %s", clientHeaderValue, api.ClientHeader)
+	headers.Set(cerberusClientHeader, xCerberusClientHeaderValue)
 	return headers, nil
 }
 

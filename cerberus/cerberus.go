@@ -35,12 +35,13 @@ type Client struct {
 	CerberusURL    *url.URL
 	vaultClient    *vault.Client
 	httpClient     *http.Client
+	cliHeader      string
 }
 
 // NewClient creates a new Client given an Authentication method.
 // This method expects a file (which can be nil) as a source for a OTP used for MFA against Cerberus (if needed).
 // If it is a file, it expect the token and a new line.
-func NewClient(authMethod auth.Auth, otpFile *os.File) (*Client, error) {
+func NewClient(authMethod auth.Auth, otpFile *os.File, header string) (*Client, error) {
 	// Get the token and authenticate
 	token, loginErr := authMethod.GetToken(otpFile)
 	if loginErr != nil {
@@ -60,6 +61,7 @@ func NewClient(authMethod auth.Auth, otpFile *os.File) (*Client, error) {
 		CerberusURL:    authMethod.GetURL(),
 		vaultClient:    vclient,
 		httpClient:     &http.Client{},
+		cliHeader:      header,
 	}, nil
 }
 
@@ -122,12 +124,13 @@ func (c *Client) DoRequestWithBody(method, path string, params map[string]string
 	baseURL.RawQuery = p.Encode()
 	var req *http.Request
 	var err error
+	var header = c.cliHeader
 
 	req, err = http.NewRequest(method, baseURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
-	headers, headerErr := c.Authentication.GetHeaders()
+	headers, headerErr := c.Authentication.GetHeaders(header)
 	if headerErr != nil {
 		return nil, headerErr
 	}
