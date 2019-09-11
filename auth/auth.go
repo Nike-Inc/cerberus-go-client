@@ -56,6 +56,10 @@ type Auth interface {
 	GetExpiry() (time.Time, error)
 }
 
+func GetHeaders(headers http.Header) (http.Header, error) {
+	return headers, nil
+}
+
 // Refresh contains logic for refreshing a token against the API. Because
 // all tokens can be refreshed this way, it is better to keep this in one place
 func Refresh(builtURL url.URL, headers http.Header) (*api.UserAuthResponse, error) {
