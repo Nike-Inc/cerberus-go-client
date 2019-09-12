@@ -35,13 +35,13 @@ type Client struct {
 	CerberusURL    *url.URL
 	vaultClient    *vault.Client
 	httpClient     *http.Client
-	cliHeader      string
+	defaultHeaders http.Header
 }
 
 // NewClient creates a new Client given an Authentication method.
 // This method expects a file (which can be nil) as a source for a OTP used for MFA against Cerberus (if needed).
 // If it is a file, it expect the token and a new line.
-func NewClient(authMethod auth.Auth, otpFile *os.File, header string) (*Client, error) {
+func NewClient(authMethod auth.Auth, otpFile *os.File) (*Client, error) {
 	// Get the token and authenticate
 	token, loginErr := authMethod.GetToken(otpFile)
 	if loginErr != nil {
@@ -61,7 +61,31 @@ func NewClient(authMethod auth.Auth, otpFile *os.File, header string) (*Client, 
 		CerberusURL:    authMethod.GetURL(),
 		vaultClient:    vclient,
 		httpClient:     &http.Client{},
-		cliHeader:      header,
+		defaultHeaders: http.Header{},
+	}, nil
+}
+
+func NewClientWithHeaders(authMethod auth.Auth, otpFile *os.File, defaultHeaders http.Header) (*Client, error) {
+	// Get the token and authenticate
+	token, loginErr := authMethod.GetToken(otpFile)
+	if loginErr != nil {
+		return nil, loginErr
+	}
+	// Setup the vault client
+	vaultConfig := vault.DefaultConfig()
+	vaultConfig.Address = authMethod.GetURL().String()
+	vclient, clientErr := vault.NewClient(vaultConfig)
+	if clientErr != nil {
+		return nil, fmt.Errorf("Error while setting up vault client: %v", clientErr)
+	}
+	// Used the returned token to set it as the token for this client as well
+	vclient.SetToken(token)
+	return &Client{
+		Authentication: authMethod,
+		CerberusURL:    authMethod.GetURL(),
+		vaultClient:    vclient,
+		httpClient:     &http.Client{},
+		defaultHeaders: defaultHeaders,
 	}, nil
 }
 
@@ -124,15 +148,18 @@ func (c *Client) DoRequestWithBody(method, path string, params map[string]string
 	baseURL.RawQuery = p.Encode()
 	var req *http.Request
 	var err error
-	var header = c.cliHeader
 
 	req, err = http.NewRequest(method, baseURL.String(), body)
 	if err != nil {
 		return nil, err
 	}
-	headers, headerErr := c.Authentication.GetHeaders(header)
+	headers, headerErr := c.Authentication.GetHeaders()
 	if headerErr != nil {
 		return nil, headerErr
+	}
+	if clientHeader, ok := c.defaultHeaders["X-Cerberus-Client"]; ok {
+		newHeader := fmt.Sprintf("%s %s", clientHeader, headers.Get("X-Cerberus-Client"))
+		headers.Set("X-Cerberus-Client", newHeader)
 	}
 	req.Header = headers
 

@@ -51,22 +51,11 @@ type Auth interface {
 	// GetHeaders is a helper for any client using the authentication strategy.
 	// It returns a basic set of headers asking for a JSON response and has
 	// the authorization header set with the proper token
-	GetHeaders(clientHeaderValue string) (http.Header, error)
+	GetHeaders() (http.Header, error)
 	GetURL() *url.URL
 	// GetExpiry either returns the expiry time of an existing token, or a zero-valued
 	// time.Time struct and an error if a token doesn't exist
 	GetExpiry() (time.Time, error)
-}
-
-func GetHeaders(clientHeaderValue string) (http.Header, error) {
-	var headers = http.Header{
-		cerberusClientHeader: []string{api.ClientHeader},
-	}
-	if clientHeaderValue != "" {
-		var xCerberusClientHeaderValue = fmt.Sprintf("%s %s", clientHeaderValue, api.ClientHeader)
-		headers.Set(cerberusClientHeader, xCerberusClientHeaderValue)
-	}
-	return headers, nil
 }
 
 // Refresh contains logic for refreshing a token against the API. Because

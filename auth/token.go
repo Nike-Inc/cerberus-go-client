@@ -51,17 +51,17 @@ func NewTokenAuth(cerberusURL, token string) (*TokenAuth, error) {
 	if err != nil {
 		return nil, err
 	}
-	var headers, e = GetHeaders("")
-	if e == nil {
-		headers.Set("Content-Type", "application/json")
-		headers.Set("Accept", "application/json")
-		headers.Set("X-Cerberus-Token", token)
+	var headers = http.Header{
+		"X-Cerberus-Client": []string{api.ClientHeader},
 	}
+	headers.Set("Content-Type", "application/json")
+	headers.Set("Accept", "application/json")
+	headers.Set("X-Cerberus-Token", token)
 	return &TokenAuth{
 		baseURL: parsedURL,
 		headers: headers,
 		token:   token,
-	}, e
+	}, nil
 }
 
 // GetToken returns the token passed when creating the TokenAuth. Nil should
@@ -111,12 +111,13 @@ func (t *TokenAuth) Logout() error {
 
 // GetHeaders returns HTTP headers used for requests if the method is currently authenticated.
 // Returns an error otherwise
-//func (t *TokenAuth) GetHeaders() (http.Header, error) {
-//	if !t.IsAuthenticated() {
-//		return nil, api.ErrorUnauthenticated
-//	}
-//	return t.headers, nil
-//}
+func (t *TokenAuth) GetHeaders(clientHeader string) (http.Header, error) {
+	if !t.IsAuthenticated() {
+		return nil, api.ErrorUnauthenticated
+	}
+	t.headers.Set()
+	return t.headers, nil
+}
 
 // GetURL returns the URL for cerberus
 func (t *TokenAuth) GetURL() *url.URL {
