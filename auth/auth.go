@@ -59,9 +59,13 @@ type Auth interface {
 }
 
 func GetHeaders(clientHeaderValue string) (http.Header, error) {
-	var headers http.Header
-	var xCerberusClientHeaderValue = fmt.Sprintf("%s %s", clientHeaderValue, api.ClientHeader)
-	headers.Set(cerberusClientHeader, xCerberusClientHeaderValue)
+	var headers = http.Header{
+		cerberusClientHeader: []string{api.ClientHeader},
+	}
+	if clientHeaderValue != "" {
+		var xCerberusClientHeaderValue = fmt.Sprintf("%s %s", clientHeaderValue, api.ClientHeader)
+		headers.Set(cerberusClientHeader, xCerberusClientHeaderValue)
+	}
 	return headers, nil
 }
 

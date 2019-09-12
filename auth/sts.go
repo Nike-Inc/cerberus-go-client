@@ -58,13 +58,14 @@ func NewSTSAuth(cerberusURL, region string) (*STSAuth, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Unable to create AWS session: %s", err)
 	}
+	var header, e = GetHeaders("")
+	if e == nil {
+		header.Set("Content-Type", "application/json")
+	}
 	return &STSAuth{
 		region:  region,
 		baseURL: parsedURL,
-		headers: http.Header{
-			"X-Cerberus-Client": []string{api.ClientHeader},
-			"Content-Type":      []string{"application/json"},
-		},
+		headers: header,
 	}, nil
 }
 
@@ -173,12 +174,12 @@ func (a *STSAuth) Logout() error {
 
 // GetHeaders returns the headers needed to authenticate against Cerberus. This will
 // return an error if the token is expired or non-existent.
-func (a *STSAuth) GetHeaders() (http.Header, error) {
-	if !a.IsAuthenticated() {
-		return nil, api.ErrorUnauthenticated
-	}
-	return a.headers, nil
-}
+//func (a *STSAuth) GetHeaders() (http.Header, error) {
+//	if !a.IsAuthenticated() {
+//		return nil, api.ErrorUnauthenticated
+//	}
+//	return a.headers, nil
+//}
 
 // GetURL returns the configured Cerberus URL.
 func (a *STSAuth) GetURL() *url.URL {
