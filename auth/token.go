@@ -51,9 +51,9 @@ func NewTokenAuth(cerberusURL, token string) (*TokenAuth, error) {
 	if err != nil {
 		return nil, err
 	}
-	var headers = http.Header{
-		"X-Cerberus-Client": []string{api.ClientHeader},
-	}
+	// e returns nil
+	var headers, e = GetHeaders("")
+
 	headers.Set("Content-Type", "application/json")
 	headers.Set("Accept", "application/json")
 	headers.Set("X-Cerberus-Token", token)
@@ -61,7 +61,7 @@ func NewTokenAuth(cerberusURL, token string) (*TokenAuth, error) {
 		baseURL: parsedURL,
 		headers: headers,
 		token:   token,
-	}, nil
+	}, e
 }
 
 // GetToken returns the token passed when creating the TokenAuth. Nil should
