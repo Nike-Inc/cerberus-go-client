@@ -19,7 +19,6 @@ limitations under the License.
 // to get a login token or manage authentication without having to set up a full client
 package auth
 
-
 import (
 	"fmt"
 	"net/http"
@@ -34,7 +33,6 @@ import (
 // expiryDelta is the amount of time to subtract from the expiry time to compensate for
 // network request time and clock skew
 const expiryDelta time.Duration = 60 * time.Second
-const cerberusClientHeader string = "X-Cerberus-Client"
 
 // The Auth interface describes the methods that all authentication providers must satisfy
 type Auth interface {
