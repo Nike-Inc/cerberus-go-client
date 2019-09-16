@@ -157,7 +157,8 @@ func (c *Client) DoRequestWithBody(method, path string, params map[string]string
 	if headerErr != nil {
 		return nil, headerErr
 	}
-	if clientHeader, ok := c.defaultHeaders["X-Cerberus-Client"]; ok {
+	clientHeader := c.defaultHeaders.Get("X-Cerberus-Client")
+	if clientHeader != "" {
 		newHeader := fmt.Sprintf("%s %s", clientHeader, headers.Get("X-Cerberus-Client"))
 		fmt.Println(newHeader)
 		headers.Set("X-Cerberus-Client", newHeader)
