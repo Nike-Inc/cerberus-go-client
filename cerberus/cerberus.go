@@ -160,7 +160,6 @@ func (c *Client) DoRequestWithBody(method, path string, params map[string]string
 	clientHeader := c.defaultHeaders.Get("X-Cerberus-Client")
 	if clientHeader != "" {
 		newHeader := fmt.Sprintf("%s %s", clientHeader, headers.Get("X-Cerberus-Client"))
-		fmt.Println(newHeader)
 		headers.Set("X-Cerberus-Client", newHeader)
 	}
 	req.Header = headers
