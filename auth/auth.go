@@ -49,7 +49,7 @@ type Auth interface {
 	// GetHeaders is a helper for any client using the authentication strategy.
 	// It returns a basic set of headers asking for a JSON response and has
 	// the authorization header set with the proper token
-	GetHeaders() (http.Header, error)
+	GetHeaders(clientHeader http.Header) (http.Header, error)
 	GetURL() *url.URL
 	// GetExpiry either returns the expiry time of an existing token, or a zero-valued
 	// time.Time struct and an error if a token doesn't exist

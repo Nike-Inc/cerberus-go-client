@@ -81,3 +81,12 @@ func ParseAPIError(r io.Reader) error {
 	}
 	return apiErr
 }
+
+// utils.GetDefaultHeader is a helper to create the default client headers for every request
+func GetDefaultHeader(newHeader http.Header, clientHeader http.Header) {
+	newHeader.Set("X-Cerberus-Client", api.ClientHeader)
+	if clientHeader.Get("X-Cerberus-Client") != "" {
+		newHeaderValue := fmt.Sprintf("%s %s", clientHeader.Get("X-Cerberus-Client"), api.ClientHeader)
+		newHeader.Set("X-Cerberus-Client", newHeaderValue)
+	}
+}
