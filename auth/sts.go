@@ -45,7 +45,6 @@ type STSAuth struct {
 // Valid AWS credentials configured either by environment or through a credentials
 // config file are also required.
 func NewSTSAuth(cerberusURL, region string) (*STSAuth, error) {
-
 	if len(region) == 0 {
 		return nil, fmt.Errorf("Region cannot be empty")
 	}
