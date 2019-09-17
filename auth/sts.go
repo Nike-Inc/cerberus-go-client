@@ -62,7 +62,6 @@ func NewSTSAuth(cerberusURL, region string) (*STSAuth, error) {
 		region:  region,
 		baseURL: parsedURL,
 		headers: http.Header{
-			"X-Cerberus-Client": []string{api.ClientHeader},
 			"Content-Type":      []string{"application/json"},
 		},
 	}, nil

@@ -111,6 +111,47 @@ func TestNewCerberusClient(t *testing.T) {
 	})
 }
 
+func TestNewCerberusClientWithHeaders(t *testing.T) {
+	Convey("Valid setup arguments", t, func() {
+		m := GenerateMockAuth("http://example.com", "a-cool-token", false, false)
+		clientHeader := http.Header{}
+		clientHeader.Set("X-Cerberus-Client", "Cerberus-Cli/1.0 CerberusGoClient/1.0.2")
+		c, err := NewClientWithHeaders(m, nil, clientHeader)
+		Convey("Should result in a valid client", func() {
+			So(err, ShouldBeNil)
+			So(c, ShouldNotBeNil)
+		})
+	})
+
+	Convey("Valid setup arguments empty header", t, func() {
+		m := GenerateMockAuth("http://example.com", "a-cool-token", false, false)
+		c, err := NewClientWithHeaders(m, nil, http.Header{})
+		Convey("Should result in a valid client", func() {
+			So(err, ShouldBeNil)
+			So(c, ShouldNotBeNil)
+			So(c.defaultHeaders.Get("X-Cerberus-Client"), ShouldEqual, "")
+		})
+	})
+
+	Convey("no header provided", t, func() {
+		m := GenerateMockAuth("http://example.com", "a-cool-token", true, false)
+		c, err := NewClientWithHeaders(m, nil, http.Header{})
+		Convey("Should be normal header", func() {
+			So(err, ShouldNotBeNil)
+			So(c, ShouldBeNil)
+		})
+	})
+
+	Convey("Bad login to get token", t, func() {
+		m := GenerateMockAuth("http://example.com", "a-cool-token", true, false)
+		c, err := NewClientWithHeaders(m, nil, http.Header{})
+		Convey("Should error", func() {
+			So(err, ShouldNotBeNil)
+			So(c, ShouldBeNil)
+		})
+	})
+}
+
 func TestSubclients(t *testing.T) {
 	Convey("A valid client", t, func() {
 		m := GenerateMockAuth("http://example.com", "a-cool-token", false, false)
@@ -164,7 +205,7 @@ func TestParseResponse(t *testing.T) {
 	})
 }
 
-func WithServer(returnCode int, shouldRefresh bool, expectedPath, expectedMethod, bodyContains string, expectedParams map[string]string, f func(ts *httptest.Server)) func() {
+func WithServer(returnCode int, shouldRefresh bool, expectedPath, expectedMethod, bodyContains string, expectedParams map[string]string, expectedHeaders http.Header, f func(ts *httptest.Server)) func() {
 	return func() {
 		Convey("http requests should be correct", func(c C) {
 			ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -173,6 +214,10 @@ func WithServer(returnCode int, shouldRefresh bool, expectedPath, expectedMethod
 				// Make sure all expected params are there
 				for k, v := range expectedParams {
 					c.So(r.FormValue(k), ShouldEqual, v)
+				}
+				// Make sure request headers match expected
+				for k := range expectedHeaders {
+					c.So(r.Header.Get(k), ShouldEqual, expectedHeaders.Get(k))
 				}
 				body, err := ioutil.ReadAll(r.Body)
 				c.So(err, ShouldBeNil)
@@ -197,7 +242,9 @@ func TestDoRequest(t *testing.T) {
 		"theNumberThouShaltCountTo": "3",
 		"rightOut":                  "5",
 	}
-	Convey("Valid GET request", t, WithServer(http.StatusOK, false, "/v1/blah", http.MethodGet, "", map[string]string{}, func(ts *httptest.Server) {
+	expectedHeader := http.Header{}
+	expectedHeader.Set("X-Cerberus-Client", "CerberusGoClient/1.0.2")
+	Convey("Valid GET request", t, WithServer(http.StatusOK, false, "/v1/blah", http.MethodGet, "", map[string]string{}, expectedHeader, func(ts *httptest.Server) {
 		cl, _ := NewClient(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil)
 		So(cl, ShouldNotBeNil)
 		Convey("Should return a valid response", func() {
@@ -207,7 +254,7 @@ func TestDoRequest(t *testing.T) {
 		})
 	}))
 
-	Convey("Valid request with params", t, WithServer(http.StatusOK, false, "/v1/blah", http.MethodGet, "", testParams, func(ts *httptest.Server) {
+	Convey("Valid request with params", t, WithServer(http.StatusOK, false, "/v1/blah", http.MethodGet, "", testParams, http.Header{}, func(ts *httptest.Server) {
 		cl, _ := NewClient(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil)
 		So(cl, ShouldNotBeNil)
 		Convey("Should return a valid response", func() {
@@ -217,7 +264,7 @@ func TestDoRequest(t *testing.T) {
 		})
 	}))
 
-	Convey("Valid POST request", t, WithServer(http.StatusOK, true, "/v1/books/armaments", http.MethodPost, "holy hand grenade of antioch", map[string]string{}, func(ts *httptest.Server) {
+	Convey("Valid POST request", t, WithServer(http.StatusOK, true, "/v1/books/armaments", http.MethodPost, "holy hand grenade of antioch", map[string]string{}, expectedHeader, func(ts *httptest.Server) {
 		cl, _ := NewClient(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil)
 		So(cl, ShouldNotBeNil)
 		var testData = map[string]string{
@@ -231,7 +278,7 @@ func TestDoRequest(t *testing.T) {
 		})
 	}))
 
-	Convey("Valid POST request", t, WithServer(http.StatusOK, true, "/v1/books/armaments", http.MethodPost, "holy hand grenade of antioch", map[string]string{}, func(ts *httptest.Server) {
+	Convey("Valid POST request", t, WithServer(http.StatusOK, true, "/v1/books/armaments", http.MethodPost, "holy hand grenade of antioch", map[string]string{}, http.Header{}, func(ts *httptest.Server) {
 		cl, _ := NewClient(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil)
 		So(cl, ShouldNotBeNil)
 		var testData = map[string]string{
@@ -248,7 +295,7 @@ func TestDoRequest(t *testing.T) {
 		})
 	}))
 
-	Convey("Valid POST request with failed refresh", t, WithServer(http.StatusOK, true, "/v1/books/armaments", http.MethodPost, "holy hand grenade of antioch", map[string]string{}, func(ts *httptest.Server) {
+	Convey("Valid POST request with failed refresh", t, WithServer(http.StatusOK, true, "/v1/books/armaments", http.MethodPost, "holy hand grenade of antioch", map[string]string{}, http.Header{}, func(ts *httptest.Server) {
 		cl, _ := NewClient(GenerateMockAuth(ts.URL, "a-cool-token", false, true), nil)
 		So(cl, ShouldNotBeNil)
 		var testData = map[string]string{
@@ -264,6 +311,92 @@ func TestDoRequest(t *testing.T) {
 
 	Convey("A request to a non-responsive server", t, func() {
 		cl, _ := NewClient(GenerateMockAuth("http://127.0.0.1:32876", "a-cool-token", false, false), nil)
+		So(cl, ShouldNotBeNil)
+		Convey("Should return an error", func() {
+			resp, err := cl.DoRequest(http.MethodGet, "/v1/blah", map[string]string{}, nil)
+			So(err, ShouldNotBeNil)
+			So(resp, ShouldBeNil)
+		})
+	})
+}
+
+func TestDoRequestWithNewHeader(t *testing.T) {
+	var testParams = map[string]string{
+		"theNumberThouShaltCountTo": "3",
+		"rightOut":                  "5",
+	}
+	expectedHeader := http.Header{}
+	expectedHeader.Set("X-Cerberus-Client", "Cerberus-Cli/1.0 CerberusGoClient/1.0.2")
+	clientHeader := http.Header{}
+	clientHeader.Set("X-Cerberus-Client", "Cerberus-Cli/1.0 CerberusGoClient/1.0.2")
+	newHeader := http.Header{}
+	Convey("Valid GET request", t, WithServer(http.StatusOK, false, "/v1/blah", http.MethodGet, "", map[string]string{}, expectedHeader, func(ts *httptest.Server) {
+		cl, _ := NewClientWithHeaders(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil, clientHeader)
+		So(cl, ShouldNotBeNil)
+		Convey("Should return a valid response", func() {
+			resp, err := cl.DoRequest(http.MethodGet, "/v1/blah", map[string]string{}, nil)
+			So(err, ShouldBeNil)
+			So(resp.StatusCode, ShouldEqual, http.StatusOK)
+		})
+	}))
+
+	Convey("Valid request with params", t, WithServer(http.StatusOK, false, "/v1/blah", http.MethodGet, "", testParams, http.Header{}, func(ts *httptest.Server) {
+		cl, _ := NewClientWithHeaders(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil, newHeader)
+		So(cl, ShouldNotBeNil)
+		Convey("Should return a valid response", func() {
+			resp, err := cl.DoRequest(http.MethodGet, "/v1/blah", testParams, nil)
+			So(err, ShouldBeNil)
+			So(resp.StatusCode, ShouldEqual, http.StatusOK)
+		})
+	}))
+
+	Convey("Valid POST request", t, WithServer(http.StatusOK, true, "/v1/books/armaments", http.MethodPost, "holy hand grenade of antioch", map[string]string{}, expectedHeader, func(ts *httptest.Server) {
+		cl, _ := NewClientWithHeaders(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil, clientHeader)
+		So(cl, ShouldNotBeNil)
+		var testData = map[string]string{
+			"character": "Brother Maynard",
+			"weapon":    "holy hand grenade of antioch",
+		}
+		Convey("Should return a valid response", func() {
+			resp, err := cl.DoRequest(http.MethodPost, "/v1/books/armaments", map[string]string{}, testData)
+			So(err, ShouldBeNil)
+			So(resp.StatusCode, ShouldEqual, http.StatusOK)
+		})
+	}))
+
+	Convey("Valid POST request", t, WithServer(http.StatusOK, true, "/v1/books/armaments", http.MethodPost, "holy hand grenade of antioch", map[string]string{}, http.Header{}, func(ts *httptest.Server) {
+		cl, _ := NewClientWithHeaders(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil, newHeader)
+		So(cl, ShouldNotBeNil)
+		var testData = map[string]string{
+			"character": "Brother Maynard",
+			"weapon":    "holy hand grenade of antioch",
+		}
+		Convey("Should return a valid response", func() {
+			resp, err := cl.DoRequest(http.MethodPost, "/v1/books/armaments", map[string]string{}, testData)
+			So(err, ShouldBeNil)
+			So(resp.StatusCode, ShouldEqual, http.StatusOK)
+			Convey("Vault token should be set to the new token", func() {
+				So(cl.vaultClient.Token(), ShouldEqual, refreshedToken)
+			})
+		})
+	}))
+
+	Convey("Valid POST request with failed refresh", t, WithServer(http.StatusOK, true, "/v1/books/armaments", http.MethodPost, "holy hand grenade of antioch", map[string]string{}, http.Header{}, func(ts *httptest.Server) {
+		cl, _ := NewClientWithHeaders(GenerateMockAuth(ts.URL, "a-cool-token", false, true), nil, clientHeader)
+		So(cl, ShouldNotBeNil)
+		var testData = map[string]string{
+			"character": "Brother Maynard",
+			"weapon":    "holy hand grenade of antioch",
+		}
+		Convey("Should still return a valid response", func() {
+			resp, err := cl.DoRequest(http.MethodPost, "/v1/books/armaments", map[string]string{}, testData)
+			So(err, ShouldNotBeNil)
+			So(resp.StatusCode, ShouldEqual, http.StatusOK)
+		})
+	}))
+
+	Convey("A request to a non-responsive server", t, func() {
+		cl, _ := NewClientWithHeaders(GenerateMockAuth("http://127.0.0.1:32876", "a-cool-token", false, false), nil, newHeader)
 		So(cl, ShouldNotBeNil)
 		Convey("Should return an error", func() {
 			resp, err := cl.DoRequest(http.MethodGet, "/v1/blah", map[string]string{}, nil)

@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/Nike-Inc/cerberus-go-client/utils"
 	"io"
 	"net/http"
 	"net/url"
@@ -35,6 +36,7 @@ type Client struct {
 	CerberusURL    *url.URL
 	vaultClient    *vault.Client
 	httpClient     *http.Client
+	defaultHeaders http.Header
 }
 
 // NewClient creates a new Client given an Authentication method.
@@ -55,13 +57,39 @@ func NewClient(authMethod auth.Auth, otpFile *os.File) (*Client, error) {
 	}
 	// Used the returned token to set it as the token for this client as well
 	vclient.SetToken(token)
+
 	return &Client{
 		Authentication: authMethod,
 		CerberusURL:    authMethod.GetURL(),
 		vaultClient:    vclient,
-		httpClient:     &http.Client{},
+		httpClient:     utils.DefaultHttpClient(),
 	}, nil
 }
+
+func NewClientWithHeaders(authMethod auth.Auth, otpFile *os.File, defaultHeaders http.Header) (*Client, error) {
+	// Get the token and authenticate
+	token, loginErr := authMethod.GetToken(otpFile)
+	if loginErr != nil {
+		return nil, loginErr
+	}
+	// Setup the vault client
+	vaultConfig := vault.DefaultConfig()
+	vaultConfig.Address = authMethod.GetURL().String()
+	vclient, clientErr := vault.NewClient(vaultConfig)
+	if clientErr != nil {
+		return nil, fmt.Errorf("Error while setting up vault client: %v", clientErr)
+	}
+	// Used the returned token to set it as the token for this client as well
+	vclient.SetToken(token)
+
+	return &Client{
+		Authentication: authMethod,
+		CerberusURL:    authMethod.GetURL(),
+		vaultClient:    vclient,
+		httpClient:     utils.NewHttpClient(defaultHeaders),
+	}, nil
+}
+
 
 // SDB returns the SDB client
 func (c *Client) SDB() *SDB {

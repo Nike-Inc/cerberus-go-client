@@ -65,7 +65,7 @@ func Refresh(builtURL url.URL, headers http.Header) (*api.UserAuthResponse, erro
 		return nil, err
 	}
 	req.Header = headers
-	resp, err := (&http.Client{}).Do(req)
+	resp, err := (utils.NewHttpClient(headers)).Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("Problem while performing request to Cerberus: %v", err)
 	}
@@ -84,7 +84,7 @@ func Logout(builtURL url.URL, headers http.Header) error {
 		return err
 	}
 	req.Header = headers
-	resp, err := (&http.Client{}).Do(req)
+	resp, err := (utils.NewHttpClient(headers)).Do(req)
 	if err != nil {
 		return fmt.Errorf("Problem while performing request to Cerberus: %v", err)
 	}

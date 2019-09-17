@@ -77,6 +77,7 @@ func TestGetTokenSTS(t *testing.T) {
 		http.MethodPost, responseBody, map[string]string{"X-Amz-Date": "date",
 			"Authorization": "authorization"}, func(ts *httptest.Server) {
 			a, err := NewSTSAuth(ts.URL, "us-west-2")
+			a.headers.Set("X-Cerberus-Client", api.ClientHeader)
 			So(err, ShouldBeNil)
 			So(a, ShouldNotBeNil)
 
