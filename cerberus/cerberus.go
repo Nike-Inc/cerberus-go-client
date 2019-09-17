@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/Nike-Inc/cerberus-go-client/utils"
 	"io"
 	"net/http"
 	"net/url"
@@ -56,12 +57,12 @@ func NewClient(authMethod auth.Auth, otpFile *os.File) (*Client, error) {
 	}
 	// Used the returned token to set it as the token for this client as well
 	vclient.SetToken(token)
+
 	return &Client{
 		Authentication: authMethod,
 		CerberusURL:    authMethod.GetURL(),
 		vaultClient:    vclient,
-		httpClient:     &http.Client{},
-		defaultHeaders: http.Header{},
+		httpClient:     utils.DefaultHttpClient(),
 	}, nil
 }
 
@@ -80,14 +81,15 @@ func NewClientWithHeaders(authMethod auth.Auth, otpFile *os.File, defaultHeaders
 	}
 	// Used the returned token to set it as the token for this client as well
 	vclient.SetToken(token)
+
 	return &Client{
 		Authentication: authMethod,
 		CerberusURL:    authMethod.GetURL(),
 		vaultClient:    vclient,
-		httpClient:     &http.Client{},
-		defaultHeaders: defaultHeaders,
+		httpClient:     utils.NewHttpClient(defaultHeaders),
 	}, nil
 }
+
 
 // SDB returns the SDB client
 func (c *Client) SDB() *SDB {
@@ -153,7 +155,7 @@ func (c *Client) DoRequestWithBody(method, path string, params map[string]string
 	if err != nil {
 		return nil, err
 	}
-	headers, headerErr := c.Authentication.GetHeaders(c.defaultHeaders)
+	headers, headerErr := c.Authentication.GetHeaders()
 	if headerErr != nil {
 		return nil, headerErr
 	}

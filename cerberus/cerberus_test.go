@@ -19,7 +19,6 @@ package cerberus
 import (
 	"bytes"
 	"fmt"
-	"github.com/Nike-Inc/cerberus-go-client/utils"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -80,8 +79,7 @@ func (m *MockAuth) Logout() error {
 	return nil
 }
 
-func (m *MockAuth) GetHeaders(clientHeader http.Header) (http.Header, error) {
-	utils.GetDefaultHeader(m.headers, clientHeader)
+func (m *MockAuth) GetHeaders() (http.Header, error) {
 	return m.headers, nil
 }
 
@@ -117,12 +115,11 @@ func TestNewCerberusClientWithHeaders(t *testing.T) {
 	Convey("Valid setup arguments", t, func() {
 		m := GenerateMockAuth("http://example.com", "a-cool-token", false, false)
 		clientHeader := http.Header{}
-		clientHeader.Set("X-Cerberus-Client", "Cerberus-Cli/1.0")
+		clientHeader.Set("X-Cerberus-Client", "Cerberus-Cli/1.0 CerberusGoClient/1.0.2")
 		c, err := NewClientWithHeaders(m, nil, clientHeader)
 		Convey("Should result in a valid client", func() {
 			So(err, ShouldBeNil)
 			So(c, ShouldNotBeNil)
-			So(c.defaultHeaders.Get("X-Cerberus-Client"), ShouldEqual, "Cerberus-Cli/1.0")
 		})
 	})
 
@@ -245,7 +242,9 @@ func TestDoRequest(t *testing.T) {
 		"theNumberThouShaltCountTo": "3",
 		"rightOut":                  "5",
 	}
-	Convey("Valid GET request", t, WithServer(http.StatusOK, false, "/v1/blah", http.MethodGet, "", map[string]string{}, http.Header{}, func(ts *httptest.Server) {
+	expectedHeader := http.Header{}
+	expectedHeader.Set("X-Cerberus-Client", "CerberusGoClient/1.0.2")
+	Convey("Valid GET request", t, WithServer(http.StatusOK, false, "/v1/blah", http.MethodGet, "", map[string]string{}, expectedHeader, func(ts *httptest.Server) {
 		cl, _ := NewClient(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil)
 		So(cl, ShouldNotBeNil)
 		Convey("Should return a valid response", func() {
@@ -265,7 +264,7 @@ func TestDoRequest(t *testing.T) {
 		})
 	}))
 
-	Convey("Valid POST request", t, WithServer(http.StatusOK, true, "/v1/books/armaments", http.MethodPost, "holy hand grenade of antioch", map[string]string{}, http.Header{}, func(ts *httptest.Server) {
+	Convey("Valid POST request", t, WithServer(http.StatusOK, true, "/v1/books/armaments", http.MethodPost, "holy hand grenade of antioch", map[string]string{}, expectedHeader, func(ts *httptest.Server) {
 		cl, _ := NewClient(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil)
 		So(cl, ShouldNotBeNil)
 		var testData = map[string]string{
@@ -329,7 +328,7 @@ func TestDoRequestWithNewHeader(t *testing.T) {
 	expectedHeader := http.Header{}
 	expectedHeader.Set("X-Cerberus-Client", "Cerberus-Cli/1.0 CerberusGoClient/1.0.2")
 	clientHeader := http.Header{}
-	clientHeader.Set("X-Cerberus-Client", "Cerberus-Cli/1.0")
+	clientHeader.Set("X-Cerberus-Client", "Cerberus-Cli/1.0 CerberusGoClient/1.0.2")
 	newHeader := http.Header{}
 	Convey("Valid GET request", t, WithServer(http.StatusOK, false, "/v1/blah", http.MethodGet, "", map[string]string{}, expectedHeader, func(ts *httptest.Server) {
 		cl, _ := NewClientWithHeaders(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil, clientHeader)

@@ -109,8 +109,7 @@ func (t *TokenAuth) Logout() error {
 
 // GetHeaders returns HTTP headers used for requests if the method is currently authenticated.
 // Returns an error otherwise
-func (t *TokenAuth) GetHeaders(clientHeader http.Header) (http.Header, error) {
-	utils.GetDefaultHeader(t.headers, clientHeader)
+func (t *TokenAuth) GetHeaders() (http.Header, error) {
 	if !t.IsAuthenticated() {
 		return nil, api.ErrorUnauthenticated
 	}

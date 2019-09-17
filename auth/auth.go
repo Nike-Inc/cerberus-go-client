@@ -49,7 +49,7 @@ type Auth interface {
 	// GetHeaders is a helper for any client using the authentication strategy.
 	// It returns a basic set of headers asking for a JSON response and has
 	// the authorization header set with the proper token
-	GetHeaders(clientHeader http.Header) (http.Header, error)
+	GetHeaders() (http.Header, error)
 	GetURL() *url.URL
 	// GetExpiry either returns the expiry time of an existing token, or a zero-valued
 	// time.Time struct and an error if a token doesn't exist
@@ -65,7 +65,7 @@ func Refresh(builtURL url.URL, headers http.Header) (*api.UserAuthResponse, erro
 		return nil, err
 	}
 	req.Header = headers
-	resp, err := (&http.Client{}).Do(req)
+	resp, err := (utils.DefaultHttpClient()).Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("Problem while performing request to Cerberus: %v", err)
 	}
@@ -84,7 +84,7 @@ func Logout(builtURL url.URL, headers http.Header) error {
 		return err
 	}
 	req.Header = headers
-	resp, err := (&http.Client{}).Do(req)
+	resp, err := (utils.DefaultHttpClient()).Do(req)
 	if err != nil {
 		return fmt.Errorf("Problem while performing request to Cerberus: %v", err)
 	}

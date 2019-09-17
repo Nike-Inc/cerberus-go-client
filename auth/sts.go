@@ -45,6 +45,7 @@ type STSAuth struct {
 // Valid AWS credentials configured either by environment or through a credentials
 // config file are also required.
 func NewSTSAuth(cerberusURL, region string) (*STSAuth, error) {
+
 	if len(region) == 0 {
 		return nil, fmt.Errorf("Region cannot be empty")
 	}
@@ -172,8 +173,7 @@ func (a *STSAuth) Logout() error {
 
 // GetHeaders returns the headers needed to authenticate against Cerberus. This will
 // return an error if the token is expired or non-existent.
-func (a *STSAuth) GetHeaders(clientHeader http.Header) (http.Header, error) {
-	utils.GetDefaultHeader(a.headers, clientHeader)
+func (a *STSAuth) GetHeaders() (http.Header, error) {
 	if !a.IsAuthenticated() {
 		return nil, api.ErrorUnauthenticated
 	}
