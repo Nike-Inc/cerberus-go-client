@@ -218,6 +218,7 @@ func WithServer(returnCode int, shouldRefresh bool, expectedPath, expectedMethod
 				for k, v := range expectedParams {
 					c.So(r.FormValue(k), ShouldEqual, v)
 				}
+				// Make sure request headers match expected
 				for k := range expectedHeaders {
 					c.So(r.Header.Get(k), ShouldEqual, expectedHeaders.Get(k))
 				}
