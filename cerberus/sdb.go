@@ -193,7 +193,7 @@ func (s *SDB) Delete(id string) error {
 	if resp.StatusCode == http.StatusNotFound {
 		return ErrorSafeDepositBoxNotFound
 	}
-	if resp.StatusCode != http.StatusOK {
+	if resp.StatusCode != http.StatusNoContent {
 		apiErr := utils.ParseAPIError(resp.Body)
 		if apiErr == ErrorBodyNotReturned {
 			return fmt.Errorf("Error while deleting SDB. Got HTTP status code %d. %v", resp.StatusCode, apiErr)

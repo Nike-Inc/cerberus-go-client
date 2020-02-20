@@ -581,7 +581,7 @@ func TestUpdateSDB(t *testing.T) {
 func TestDeleteSDB(t *testing.T) {
 	var id = "a7d703da-faac-11e5-a8a9-7fa3b294cd46"
 
-	Convey("A valid delete", t, WithTestServer(http.StatusOK, "/v2/safe-deposit-box/"+id, http.MethodDelete, "", func(ts *httptest.Server) {
+	Convey("A valid delete", t, WithTestServer(http.StatusNoContent, "/v2/safe-deposit-box/"+id, http.MethodDelete, "", func(ts *httptest.Server) {
 		cl, _ := NewClient(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil)
 		So(cl, ShouldNotBeNil)
 		Convey("Should complete successfully", func() {
