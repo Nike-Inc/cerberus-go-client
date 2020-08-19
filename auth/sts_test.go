@@ -355,6 +355,28 @@ func TestRequest(t *testing.T) {
 			So(r, ShouldBeNil)
 		})
 	})
+	Convey("A valid request call to cn-north-1", t, func() {
+		a, err := NewSTSAuth("https://test.example.com", "cn-north-1")
+		So(err, ShouldBeNil)
+		So(a, ShouldNotBeNil)
+		r, e := a.request()
+		Convey("Should return a request", func() {
+			So(e, ShouldBeNil)
+			So(r.Method, ShouldEqual, "POST")
+			So(r.Host, ShouldEqual, "sts.cn-north-1.amazonaws.com.cn")
+		})
+	})
+	Convey("A valid request call to cn-northwest-1", t, func() {
+		a, err := NewSTSAuth("https://test.example.com", "cn-northwest-1")
+		So(err, ShouldBeNil)
+		So(a, ShouldNotBeNil)
+		r, e := a.request()
+		Convey("Should return a request", func() {
+			So(e, ShouldBeNil)
+			So(r.Method, ShouldEqual, "POST")
+			So(r.Host, ShouldEqual, "sts.cn-northwest-1.amazonaws.com.cn")
+		})
+	})
 }
 
 func TestSign(t *testing.T) {

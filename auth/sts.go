@@ -62,7 +62,7 @@ func NewSTSAuth(cerberusURL, region string) (*STSAuth, error) {
 		region:  region,
 		baseURL: parsedURL,
 		headers: http.Header{
-			"Content-Type":      []string{"application/json"},
+			"Content-Type": []string{"application/json"},
 		},
 	}, nil
 }
@@ -203,6 +203,11 @@ func signer() (*v4.Signer, error) {
 
 // request creates an STS Auth request.
 func (a *STSAuth) request() (*http.Request, error) {
+
+	var chinaRegions = make(map[string]struct{})
+	chinaRegions["cn-north-1"] = struct{}{}
+	chinaRegions["cn-northwest-1"] = struct{}{}
+
 	_, err := endpoints.DefaultResolver().EndpointFor("sts", a.region, endpoints.StrictMatchingOption)
 	if err != nil {
 		return nil, fmt.Errorf("Endpoint could not be created. "+
@@ -210,6 +215,9 @@ func (a *STSAuth) request() (*http.Request, error) {
 	}
 	method := "POST"
 	url := "https://sts." + a.region + ".amazonaws.com"
+	if _, ok := chinaRegions[a.region]; ok {
+		url += ".cn"
+	}
 	request, _ := http.NewRequest(method, url, nil)
 	return request, nil
 }
