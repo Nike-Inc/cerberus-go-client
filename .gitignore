@@ -1,3 +1,4 @@
 cerberus-client
 .DS_Store
 .idea/
+vendor/
