@@ -20,14 +20,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/Nike-Inc/cerberus-go-client/auth"
 	"github.com/Nike-Inc/cerberus-go-client/utils"
+	"github.com/cenkalti/backoff/v4"
+	vault "github.com/hashicorp/vault/api"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
-
-	"github.com/Nike-Inc/cerberus-go-client/auth"
-	vault "github.com/hashicorp/vault/api"
 )
 
 // Client is the main client for interacting with Cerberus
@@ -89,7 +89,6 @@ func NewClientWithHeaders(authMethod auth.Auth, otpFile *os.File, defaultHeaders
 		httpClient:     utils.NewHttpClient(defaultHeaders),
 	}, nil
 }
-
 
 // SDB returns the SDB client
 func (c *Client) SDB() *SDB {
@@ -165,8 +164,12 @@ func (c *Client) DoRequestWithBody(method, path string, params map[string]string
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
 	}
-
-	resp, respErr := c.httpClient.Do(req)
+	var resp *http.Response
+	respErr := backoff.Retry(func() error {
+		var err error
+		resp, err = c.httpClient.Do(req)
+		return err
+	}, backoff.NewExponentialBackOff())
 	if respErr != nil {
 		// We may get an actual response for redirect error
 		return resp, respErr
@@ -211,5 +214,3 @@ func parseResponse(r io.Reader, parseTo interface{}) error {
 	// Decode the body into the provided interface
 	return json.NewDecoder(r).Decode(parseTo)
 }
-
-
