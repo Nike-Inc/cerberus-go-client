@@ -127,6 +127,15 @@ func (a *STSAuth) authenticate() error {
 		return fmt.Errorf("Error while trying to parse response from Cerberus: %v", err)
 	}
 
+	metadata := authResponse.Metadata
+	identity := "unknown"
+	if iam_principal, found := metadata["iam_principal_arn"]; found {
+		identity = iam_principal
+	} else if username, found := metadata["username"]; found {
+		identity = username
+	}
+	fmt.Printf("Successfully authenticated with Cerberus as %v\n", identity)
+
 	a.token = authResponse.Token
 	a.headers.Set("X-Cerberus-Token", authResponse.Token)
 	a.expiry = time.Now().Add((time.Duration(authResponse.Duration) * time.Second) - expiryDelta)
