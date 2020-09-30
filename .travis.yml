@@ -5,9 +5,4 @@ os:
   - linux
 dist: xenial
 script:
-- go build ./api
-- go build ./auth
-- go build ./cerberus
-- go test ./api
-- go test ./auth
-- go test ./cerberus
+- make test 2>&1 # Run tests
