@@ -1,7 +1,14 @@
 sudo: false
 language: go
 go:
-- 1.15.x
+  - 1.15.x
+os:
+  - linux
+dist: xenial
 script:
-- go build ./...
-- go test ./...
+- go build ./api
+- go build ./auth
+- go build ./cerberus
+- go test ./api
+- go test ./auth
+- go test ./cerberus
