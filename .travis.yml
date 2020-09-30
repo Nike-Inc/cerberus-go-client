@@ -3,5 +3,5 @@ language: go
 go:
 - 1.15.x
 script:
-- go build
-- go test
+- go build ./...
+- go test ./...
