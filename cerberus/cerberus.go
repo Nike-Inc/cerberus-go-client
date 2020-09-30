@@ -22,12 +22,14 @@ import (
 	"fmt"
 	"github.com/Nike-Inc/cerberus-go-client/auth"
 	"github.com/Nike-Inc/cerberus-go-client/utils"
-	"github.com/cenkalti/backoff/v4"
+	"github.com/cenkalti/backoff"
 	vault "github.com/hashicorp/vault/api"
+	"github.com/taskcluster/httpbackoff"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 )
 
 // Client is the main client for interacting with Cerberus
@@ -165,11 +167,17 @@ func (c *Client) DoRequestWithBody(method, path string, params map[string]string
 		req.Header.Set("Content-Type", contentType)
 	}
 	var resp *http.Response
-	respErr := backoff.Retry(func() error {
-		var err error
-		resp, err = c.httpClient.Do(req)
-		return err
-	}, backoff.NewExponentialBackOff())
+	retryClient := httpbackoff.Client{
+		BackOffSettings: &backoff.ExponentialBackOff{
+			InitialInterval:     1 * time.Millisecond,
+			RandomizationFactor: 0.2,
+			Multiplier:          1.2,
+			MaxInterval:         5 * time.Millisecond,
+			MaxElapsedTime:      5 * time.Second,
+			Clock:               backoff.SystemClock,
+		},
+	}
+	resp, _, respErr := retryClient.ClientDo(c.httpClient, req)
 	if respErr != nil {
 		// We may get an actual response for redirect error
 		return resp, respErr

@@ -4,7 +4,7 @@ go 1.15
 
 require (
 	github.com/aws/aws-sdk-go v1.25.37
-	github.com/cenkalti/backoff/v4 v4.0.2
+	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/google/go-cmp v0.5.1
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/hashicorp/go-multierror v1.1.0 // indirect
@@ -14,6 +14,7 @@ require (
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 	github.com/smartystreets/goconvey v1.6.4
 	github.com/stretchr/testify v1.6.1 // indirect
+	github.com/taskcluster/httpbackoff v1.0.0
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect
 	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect
 	golang.org/x/text v0.3.3 // indirect
