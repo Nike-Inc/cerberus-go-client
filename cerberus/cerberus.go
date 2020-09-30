@@ -169,11 +169,11 @@ func (c *Client) DoRequestWithBody(method, path string, params map[string]string
 	var resp *http.Response
 	retryClient := httpbackoff.Client{
 		BackOffSettings: &backoff.ExponentialBackOff{
-			InitialInterval:     1 * time.Millisecond,
-			RandomizationFactor: 0.2,
-			Multiplier:          1.2,
-			MaxInterval:         5 * time.Millisecond,
-			MaxElapsedTime:      5 * time.Second,
+			InitialInterval:     100 * time.Millisecond,
+			RandomizationFactor: 0,
+			Multiplier:          2,
+			MaxInterval:         600 * time.Millisecond,
+			MaxElapsedTime:      600 * time.Millisecond,
 			Clock:               backoff.SystemClock,
 		},
 	}
