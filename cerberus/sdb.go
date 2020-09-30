@@ -67,11 +67,12 @@ func (s *SDB) Get(id string) (*api.SafeDepositBox, error) {
 		defer resp.Body.Close()
 	}
 	if err != nil {
+		if resp != nil {
+			if resp.StatusCode == http.StatusNotFound {
+				return nil, ErrorSafeDepositBoxNotFound
+			}
+		}
 		return nil, fmt.Errorf("Error while trying to get SDB: %v", err)
-	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, ErrorSafeDepositBoxNotFound
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("Error while trying to GET SDB. Got HTTP status code %d", resp.StatusCode)
@@ -113,12 +114,12 @@ func (s *SDB) Create(newSDB *api.SafeDepositBox) (*api.SafeDepositBox, error) {
 		defer resp.Body.Close()
 	}
 	if err != nil {
+		// Check if it is a bad request (improperly set params)
+		if resp != nil && resp.StatusCode == http.StatusBadRequest {
+			// Return the API error to the user
+			return nil, utils.ParseAPIError(resp.Body)
+		}
 		return nil, fmt.Errorf("Error while creating SDB: %v", err)
-	}
-
-	if resp.StatusCode == http.StatusBadRequest {
-		// Return the API error to the user
-		return nil, utils.ParseAPIError(resp.Body)
 	}
 	// If it isn't a bad request, make sure it is a good request and return an error if it isn't
 	if resp.StatusCode != http.StatusCreated {
@@ -150,16 +151,19 @@ func (s *SDB) Update(id string, updatedSDB *api.SafeDepositBox) (*api.SafeDeposi
 		defer resp.Body.Close()
 	}
 	if err != nil {
+		// Check if it is a bad request (improperly set params)
+		if resp != nil {
+			if resp.StatusCode == http.StatusNotFound {
+				return nil, ErrorSafeDepositBoxNotFound
+			}
+			if resp.StatusCode == http.StatusBadRequest {
+				// Return the API error to the user
+				return nil, utils.ParseAPIError(resp.Body)
+			}
+		}
 		return nil, fmt.Errorf("Error while updating SDB: %v", err)
 	}
 
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, ErrorSafeDepositBoxNotFound
-	}
-	if resp.StatusCode == http.StatusBadRequest {
-		// Return the API error to the user
-		return nil, utils.ParseAPIError(resp.Body)
-	}
 	if resp.StatusCode != http.StatusOK {
 		apiErr := utils.ParseAPIError(resp.Body)
 		if apiErr == ErrorBodyNotReturned {
@@ -187,11 +191,18 @@ func (s *SDB) Delete(id string) error {
 		defer resp.Body.Close()
 	}
 	if err != nil {
+		// Check if it is a bad request (improperly set params)
+		if resp != nil {
+			if resp.StatusCode == http.StatusNotFound {
+				return ErrorSafeDepositBoxNotFound
+			}
+			apiErr := utils.ParseAPIError(resp.Body)
+			if apiErr == ErrorBodyNotReturned {
+				return fmt.Errorf("Error while deleting SDB. Got HTTP status code %d. %v", resp.StatusCode, apiErr)
+			}
+			return apiErr
+		}
 		return fmt.Errorf("Error while deleting SDB: %v", err)
-	}
-
-	if resp.StatusCode == http.StatusNotFound {
-		return ErrorSafeDepositBoxNotFound
 	}
 	if resp.StatusCode != http.StatusNoContent {
 		apiErr := utils.ParseAPIError(resp.Body)

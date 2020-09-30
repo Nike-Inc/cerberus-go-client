@@ -1,9 +1,5 @@
 clean:
 	go clean
-	rm -rfv vendor
-
-install:
-	dep ensure -v
 
 test:
 	go test -v ./api ./auth ./cerberus ./utils
