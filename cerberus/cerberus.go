@@ -24,6 +24,7 @@ import (
 	"github.com/Nike-Inc/cerberus-go-client/utils"
 	"github.com/cenkalti/backoff"
 	vault "github.com/hashicorp/vault/api"
+	log "github.com/sirupsen/logrus"
 	"github.com/taskcluster/httpbackoff"
 	"io"
 	"net/http"
@@ -179,6 +180,12 @@ func (c *Client) DoRequestWithBody(method, path string, params map[string]string
 	}
 	resp, _, respErr := retryClient.ClientDo(c.httpClient, req)
 	if respErr != nil {
+		if resp != nil {
+			log.Info(fmt.Sprintf("Cerberus returned an error, when executing a call. \nstatus code: %v \nmsg: %v)", resp.StatusCode, respErr))
+		} else {
+			log.Info(fmt.Sprintf("An error was thrown when executing a call to Cerberus.\nmsg: %v)", respErr))
+		}
+
 		// We may get an actual response for redirect error
 		return resp, respErr
 	}
