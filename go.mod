@@ -3,7 +3,7 @@ module github.com/Nike-Inc/cerberus-go-client
 go 1.15
 
 require (
-	github.com/aws/aws-sdk-go v1.25.37
+	github.com/aws/aws-sdk-go v1.35.11
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/google/go-cmp v0.5.1
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
