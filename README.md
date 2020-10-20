@@ -13,8 +13,8 @@ The simplest way to get started is to use the user authentication:
 ```go
 import (
 	"fmt"
-	"github.com/Nike-Inc/cerberus-go-client/cerberus"
-	"github.com/Nike-Inc/cerberus-go-client/auth"
+	"github.com/Nike-Inc/cerberus-go-client/v3/cerberus"
+	"github.com/Nike-Inc/cerberus-go-client/v3.auth"
 )
 ...
 authMethod, _ := auth.NewUserAuth("https://cerberus.example.com", "my-cerberus-user", "my-password")
@@ -125,9 +125,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Nike-Inc/cerberus-go-client/cerberus"
-	"github.com/Nike-Inc/cerberus-go-client/api"
-	"github.com/Nike-Inc/cerberus-go-client/auth"
+	"github.com/Nike-Inc/cerberus-go-client/v3/cerberus"
+	"github.com/Nike-Inc/cerberus-go-client/v3/api"
+	"github.com/Nike-Inc/cerberus-go-client/v3/auth"
 	"golang.org/x/crypto/ssh/terminal"
 )
 

@@ -26,8 +26,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/Nike-Inc/cerberus-go-client/api"
-	"github.com/Nike-Inc/cerberus-go-client/utils"
+	"github.com/Nike-Inc/cerberus-go-client/v3/api"
+	"github.com/Nike-Inc/cerberus-go-client/v3/utils"
 )
 
 // expiryDelta is the amount of time to subtract from the expiry time to compensate for

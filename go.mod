@@ -1,4 +1,4 @@
-module github.com/Nike-Inc/cerberus-go-client
+module github.com/Nike-Inc/cerberus-go-client/v3
 
 go 1.15
 

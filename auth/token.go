@@ -23,8 +23,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/Nike-Inc/cerberus-go-client/api"
-	"github.com/Nike-Inc/cerberus-go-client/utils"
+	"github.com/Nike-Inc/cerberus-go-client/v3/api"
+	"github.com/Nike-Inc/cerberus-go-client/v3/utils"
 )
 
 // TokenAuth uses a preexisting token to authenticate to Cerberus

@@ -18,11 +18,11 @@ package cerberus
 
 import (
 	"fmt"
-	"github.com/Nike-Inc/cerberus-go-client/utils"
+	"github.com/Nike-Inc/cerberus-go-client/v3/utils"
 	"net/http"
 	"strings"
 
-	"github.com/Nike-Inc/cerberus-go-client/api"
+	"github.com/Nike-Inc/cerberus-go-client/v3/api"
 )
 
 // ErrorSafeDepositBoxNotFound is returned when a specified deposit box is not found
