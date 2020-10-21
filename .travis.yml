@@ -2,7 +2,7 @@ dist: xenial
 os: linux
 language: go
 go:
-- 1.11.4
+  - 1.15.x
 before_install:
 - curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
 - if [ ! -d $CODE_DIRECTORY ]; then mkdir -p $HOME/gopath/src/github.com/Nike-Inc; ln -s $TRAVIS_BUILD_DIR $CODE_DIRECTORY; fi # CI for forks
