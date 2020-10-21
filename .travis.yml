@@ -11,3 +11,5 @@ env:
 script:
 - cd $CODE_DIRECTORY # change dir into source
 - make test 2>&1 # Run tests
+- cd $CODE_DIRECTORY/v3
+- make test 2>&1 #run tests on major version 3
