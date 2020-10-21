@@ -52,12 +52,13 @@ func (m *Metadata) List(opts MetadataOpts) (*api.MetadataResponse, error) {
 		defer resp.Body.Close()
 	}
 	if err != nil {
-		// Check if it is a bad request (improperly set params)
-		if resp != nil && resp.StatusCode == http.StatusBadRequest {
-			// Return the API error to the user
-			return nil, utils.ParseAPIError(resp.Body)
-		}
 		return nil, fmt.Errorf("Error while trying to get roles: %v", err)
+	}
+
+	// Check if it is a bad request (improperly set params)
+	if resp.StatusCode == http.StatusBadRequest {
+		// Return the API error to the user
+		return nil, utils.ParseAPIError(resp.Body)
 	}
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("Error while trying to GET metadata. Got HTTP status code %d", resp.StatusCode)

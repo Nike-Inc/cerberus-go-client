@@ -20,17 +20,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/Nike-Inc/cerberus-go-client/auth"
 	"github.com/Nike-Inc/cerberus-go-client/utils"
-	"github.com/cenkalti/backoff"
-	vault "github.com/hashicorp/vault/api"
-	log "github.com/sirupsen/logrus"
-	"github.com/taskcluster/httpbackoff"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
-	"time"
+
+	"github.com/Nike-Inc/cerberus-go-client/auth"
+	vault "github.com/hashicorp/vault/api"
 )
 
 // Client is the main client for interacting with Cerberus
@@ -92,6 +89,7 @@ func NewClientWithHeaders(authMethod auth.Auth, otpFile *os.File, defaultHeaders
 		httpClient:     utils.NewHttpClient(defaultHeaders),
 	}, nil
 }
+
 
 // SDB returns the SDB client
 func (c *Client) SDB() *SDB {
@@ -167,25 +165,9 @@ func (c *Client) DoRequestWithBody(method, path string, params map[string]string
 	if contentType != "" {
 		req.Header.Set("Content-Type", contentType)
 	}
-	var resp *http.Response
-	retryClient := httpbackoff.Client{
-		BackOffSettings: &backoff.ExponentialBackOff{
-			InitialInterval:     100 * time.Millisecond,
-			RandomizationFactor: 0,
-			Multiplier:          2,
-			MaxInterval:         600 * time.Millisecond,
-			MaxElapsedTime:      600 * time.Millisecond,
-			Clock:               backoff.SystemClock,
-		},
-	}
-	resp, _, respErr := retryClient.ClientDo(c.httpClient, req)
-	if respErr != nil {
-		if resp != nil {
-			log.Info(fmt.Sprintf("Cerberus returned an error, when executing a call. \nstatus code: %v \nmsg: %v)", resp.StatusCode, respErr))
-		} else {
-			log.Info(fmt.Sprintf("An error was thrown when executing a call to Cerberus.\nmsg: %v)", respErr))
-		}
 
+	resp, respErr := c.httpClient.Do(req)
+	if respErr != nil {
 		// We may get an actual response for redirect error
 		return resp, respErr
 	}
@@ -229,3 +211,5 @@ func parseResponse(r io.Reader, parseTo interface{}) error {
 	// Decode the body into the provided interface
 	return json.NewDecoder(r).Decode(parseTo)
 }
+
+

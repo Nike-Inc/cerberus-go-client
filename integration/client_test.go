@@ -73,7 +73,7 @@ func TestClient(t *testing.T) {
 					if len(list) < 1 {
 						t.Error("Must have at least one category of SDBs in Cerberus")
 					}
-					uuid, _ := uuid.NewV4()
+					uuid := uuid.NewV4()
 					name := "Cerberus Go Client Test " + uuid.String()
 					category := list[0]
 					iamPrincipalPerm := []api.IAMPrincipal{{
