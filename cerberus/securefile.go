@@ -24,7 +24,7 @@ import (
 	"net/http"
 	"path"
 
-	"github.com/Nike-Inc/cerberus-go-client/v3/api"
+	"github.com/Nike-Inc/cerberus-go-client/v2/api"
 )
 
 // SecureFile is a subclient for secure files

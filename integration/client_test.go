@@ -17,9 +17,9 @@ limitations under the License.
 package integration
 
 import (
-	"github.com/Nike-Inc/cerberus-go-client/v3/api"
-	"github.com/Nike-Inc/cerberus-go-client/v3/auth"
-	"github.com/Nike-Inc/cerberus-go-client/v3/cerberus"
+	"github.com/Nike-Inc/cerberus-go-client/v2/api"
+	"github.com/Nike-Inc/cerberus-go-client/v2/auth"
+	"github.com/Nike-Inc/cerberus-go-client/v2/cerberus"
 	"github.com/google/go-cmp/cmp"
 	"github.com/satori/go.uuid"
 	. "github.com/smartystreets/goconvey/convey"

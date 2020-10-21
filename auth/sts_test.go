@@ -17,7 +17,7 @@ limitations under the License.
 package auth
 
 import (
-	"github.com/Nike-Inc/cerberus-go-client/v3/api"
+	"github.com/Nike-Inc/cerberus-go-client/v2/api"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	. "github.com/smartystreets/goconvey/convey"
 	"net/http"

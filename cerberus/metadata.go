@@ -20,8 +20,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Nike-Inc/cerberus-go-client/v3/api"
-	"github.com/Nike-Inc/cerberus-go-client/v3/utils"
+	"github.com/Nike-Inc/cerberus-go-client/v2/api"
+	"github.com/Nike-Inc/cerberus-go-client/v2/utils"
 )
 
 // Metadata is a subclient for accessing the metadata endpoint
