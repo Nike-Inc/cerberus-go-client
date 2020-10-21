@@ -7,6 +7,8 @@ install:
 
 test:
 	go test -v ./api ./auth ./cerberus ./utils
+
+testModules:
 	go test -v v3/api v3/auth v3/cerberus v3/utils
 
 build:
