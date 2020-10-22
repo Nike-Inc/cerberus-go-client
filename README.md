@@ -94,7 +94,7 @@ You must include the source code for this project in the src directory of your $
 must be made in the root directories (cerberus-go-client/api, cerberus-go-client/) 
 
 ### Developing for GO Module mode (Modifying versions v3.0.0 and newer)
-In version v3.0.0 the Cerberus-Go-Client was migrated to Go Modules for dependency mangement this removes the requirement
+In version v3.0.0 the Cerberus-Go-Client was migrated to Go Modules for dependency management which removes the requirement
 that your code live in the $GOPATH/src directory. Major versions starting at v3.0.0 will now occupy sub directories at the 
 project root. 
 
@@ -102,12 +102,12 @@ project root.
 If you need to bump the major version please create a new subdirectory called vN (where N is the new major
 version, i.e. v3 for v3.0.0) and make a copy of the go client in that directory (copying /api/*.go, /auth/*.go, 
 /cerberus/*.go, /utils/*.go, go.mod and Makefiles into the new directory). Update your go.mod file to reflect the new 
-major version and updating all the imports of the files you copied. 
+major version and update all the imports of the files you copied. 
 
 See https://blog.golang.org/v2-go-modules for more details on this process
 
 ### Releasing to go client
-Once your code is comitted and merged to the master branch tag with the correct symantec versioning for the files you modified. 
+Once your code is committed, merge to the master branch tag with the correct symantec versioning for the files you modified. 
 If you modified files in the /v3/ directory tag using the correct v3.x.x tag. If you update the go files in the root 
 directories tag create a tag with the correct v2.x.x tag.  
 
