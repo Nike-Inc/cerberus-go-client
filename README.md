@@ -13,8 +13,8 @@ The simplest way to get started is to use the user authentication:
 ```go
 import (
 	"fmt"
-	"github.com/Nike-Inc/cerberus-go-client/cerberus"
-	"github.com/Nike-Inc/cerberus-go-client/auth"
+	"github.com/Nike-Inc/cerberus-go-client/v3/cerberus"
+	"github.com/Nike-Inc/cerberus-go-client/v3/auth"
 )
 ...
 authMethod, _ := auth.NewUserAuth("https://cerberus.example.com", "my-cerberus-user", "my-password")
@@ -89,6 +89,28 @@ For full information on every method, see the [Godoc]().
 
 ## Development
 
+### Developing for GOPATH mode (For modifying versions pre v3.0.0)
+You must include the source code for this project in the src directory of your $GOPATH. Changes to the GOPATH mode client
+must be made in the root directories (cerberus-go-client/api, cerberus-go-client/) 
+
+### Developing for GO Module mode (Modifying versions v3.0.0 and newer)
+In version v3.0.0 the Cerberus-Go-Client was migrated to Go Modules for dependency management which removes the requirement
+that your code live in the $GOPATH/src directory. Major versions starting at v3.0.0 will now occupy sub directories at the 
+project root. 
+
+#### Bumping the major version
+If you need to bump the major version please create a new subdirectory called vN (where N is the new major
+version, i.e. v3 for v3.0.0) and make a copy of the go client in that directory (copying /api/*.go, /auth/*.go, 
+/cerberus/*.go, /utils/*.go, go.mod and Makefiles into the new directory). Update your go.mod file to reflect the new 
+major version and update all the imports of the files you copied. 
+
+See https://blog.golang.org/v2-go-modules for more details on this process
+
+### Releasing to go client
+Once your code is committed, merge to the master branch tag with the correct symantec versioning for the files you modified. 
+If you modified files in the /v3/ directory tag using the correct v3.x.x tag. If you update the go files in the root 
+directories tag create a tag with the correct v2.x.x tag.  
+
 ### Run Integration Tests
 
 First, make sure the following environment variables are set before running the Go Client integration tests:
@@ -125,9 +147,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Nike-Inc/cerberus-go-client/cerberus"
-	"github.com/Nike-Inc/cerberus-go-client/api"
-	"github.com/Nike-Inc/cerberus-go-client/auth"
+	"github.com/Nike-Inc/cerberus-go-client/v3/cerberus"
+	"github.com/Nike-Inc/cerberus-go-client/v3/api"
+	"github.com/Nike-Inc/cerberus-go-client/v3.auth"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
