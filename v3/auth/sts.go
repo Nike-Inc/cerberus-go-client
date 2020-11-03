@@ -26,6 +26,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/aws/signer/v4"
+	log "github.com/sirupsen/logrus"
 	"net/http"
 	"net/url"
 	"os"
@@ -134,7 +135,7 @@ func (a *STSAuth) authenticate() error {
 	} else if username, found := metadata["username"]; found {
 		identity = username
 	}
-	fmt.Printf("Successfully authenticated with Cerberus as %v\n", identity)
+	log.Info(fmt.Sprintf("Successfully authenticated with Cerberus as %v\n", identity))
 
 	a.token = authResponse.Token
 	a.headers.Set("X-Cerberus-Token", authResponse.Token)
