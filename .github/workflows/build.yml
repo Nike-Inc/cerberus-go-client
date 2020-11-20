@@ -26,6 +26,8 @@ jobs:
       - name: Get dependencies
         run: |
           cd go
+          pwd
+          ls
           cd src/cerberus-go-client
           if [ -f Gopkg.toml ]; then
               curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
