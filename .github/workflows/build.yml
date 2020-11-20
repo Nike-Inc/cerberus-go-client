@@ -18,6 +18,8 @@ jobs:
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
+        with:
+          path: go/src/cerberus-go-client
 
       - name: Get dependencies
         run: |
@@ -25,12 +27,18 @@ jobs:
               curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
               dep ensure -v
           fi
+        env:
+          GOPATH: /home/runner/work/cerberus-go-client/go
       - name: Test v1
         run: make test 2>&1
+          GOPATH: /home/runner/work/cerberus-go-client/go
+        env:
       - name: Test v3
         run: |
           cd v3
           make test 2>&1
+        env:
+          GOPATH: /home/runner/work/cerberus-go-client/go
       - name: Upload coverage report to CodeCov
         uses: codecov/codecov-action@v1
         with:
