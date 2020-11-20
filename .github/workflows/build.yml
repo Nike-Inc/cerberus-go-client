@@ -48,6 +48,8 @@ jobs:
           cd go/src/cerberus-go-client/v3
           make test 2>&1
           cd ..
+          pwd
+          ls
       - name: Upload coverage report to CodeCov
         uses: codecov/codecov-action@v1
         with:
