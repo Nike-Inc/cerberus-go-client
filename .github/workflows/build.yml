@@ -24,6 +24,7 @@ jobs:
       - name: Get dependencies
         run: |
           pwd
+          mkdir go/bin
           cd go/src/cerberus-go-client
           pwd
           if [ -f Gopkg.toml ]; then
