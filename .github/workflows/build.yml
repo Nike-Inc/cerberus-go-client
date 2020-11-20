@@ -47,13 +47,10 @@ jobs:
         run: |
           cd go/src/cerberus-go-client/v3
           make test 2>&1
-          cd ..
-          pwd
-          ls
       - name: Upload coverage report to CodeCov
         uses: codecov/codecov-action@v1
         with:
-          file: coverage.txt # optional
+          file: go/src/cerberus-go-client/coverage.txt # optional
           fail_ci_if_error: true # optional (default = false)
           verbose: true
       - name: Slack notification when master build fails
