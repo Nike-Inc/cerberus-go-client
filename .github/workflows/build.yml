@@ -23,7 +23,7 @@ jobs:
       - name: Get dependencies
         run: |
           export PATH="/home/runner/work/cerberus-go-client/cerberus-go-client/go/bin:$PATH"
-          cd src/cerberus-go-client
+          cd go/src/cerberus-go-client
           if [ -f Gopkg.toml ]; then
               curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
               dep ensure -v
