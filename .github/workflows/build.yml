@@ -31,7 +31,7 @@ jobs:
               dep ensure -v
           fi
         env:
-          GOPATH: /home/runner/work/cerberus-go-client/go
+          GOPATH: /home/runner/work/cerberus-go-client/cerberus-go-client/go
       - name: Test v1
         run: |
           pwd
