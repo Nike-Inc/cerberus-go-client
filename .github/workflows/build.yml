@@ -17,6 +17,7 @@ jobs:
           go-version: ^1.15
         env:
           GOPATH: /home/runner/work/cerberus-go-client/cerberus-go-client/go
+          GOBIN: /home/runner/work/cerberus-go-client/cerbeurs-go-client/go/bin
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
@@ -24,6 +25,7 @@ jobs:
           path: go/src/cerberus-go-client
       - name: Get dependencies
         run: |
+          mkdir go/bin
           cd go/src/cerberus-go-client
           if [ -f Gopkg.toml ]; then
               curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
