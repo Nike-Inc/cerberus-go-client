@@ -5,7 +5,7 @@ the [Cerberus Website](http://engineering.nike.com/cerberus/).
 [![Build Status](https://travis-ci.org/Nike-Inc/cerberus-go-client.svg?branch=master)](https://travis-ci.org/Nike-Inc/cerberus-go-client)
 [![GoDoc](https://godoc.org/github.com/Nike-Inc/cerberus-go-client/cerberus?status.svg)](https://godoc.org/github.com/Nike-Inc/cerberus-go-client/cerberus)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Nike-Inc/cerberus-go-client)](https://goreportcard.com/report/github.com/Nike-Inc/cerberus-go-client)
-
+[![codecov](https://codecov.io/gh/Nike-Inc/cerberus-go-client/branch/master/graph/badge.svg?token=i9o0gedFAJ)](https://codecov.io/gh/Nike-Inc/cerberus-go-client)
 ## Usage
 
 ### Quick Start
