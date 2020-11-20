@@ -2,6 +2,23 @@
 
 
 [[projects]]
+  digest = "1:3c6be0ea3e5a2931214a2dcab317eebb53d60f6a7205177fb169dc67d0d45c55"
+  name = "github.com/Nike-Inc/cerberus-go-client"
+  packages = [
+    "api",
+    "auth",
+    "cerberus",
+    "utils",
+    "v3/api",
+    "v3/auth",
+    "v3/cerberus",
+    "v3/utils",
+  ]
+  pruneopts = "UT"
+  revision = "9bb6182f3573ad463e90f18e0af6fd483afcb14b"
+  version = "v3.0.1"
+
+[[projects]]
   digest = "1:d94007a6bff7ea6c9dc30bf9799edae6c10a72ca00844ad992c22c6015310753"
   name = "github.com/aws/aws-sdk-go"
   packages = [
@@ -30,6 +47,14 @@
   pruneopts = "UT"
   revision = "3afa899153ab972b5e6bf2552721b677e3fdaeb5"
   version = "v1.16.20"
+
+[[projects]]
+  digest = "1:4aa08a353c0ed3a115473dca7b60067f6430c5a1f189b420336545b1fbc542fa"
+  name = "github.com/cenkalti/backoff"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "c2975ffa541a1caeca5f76c396cb8c3e7b3bb5f8"
+  version = "v4.1.0"
 
 [[projects]]
   branch = "master"
@@ -201,6 +226,14 @@
   version = "v1.2.0"
 
 [[projects]]
+  digest = "1:1760ee71834b3d0c59ffb6e0f9444fb68aec64bd6630b99b349fb111f74022fa"
+  name = "github.com/sirupsen/logrus"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "6699a89a232f3db797f2e280639854bbc4b89725"
+  version = "v1.7.0"
+
+[[projects]]
   digest = "1:cc1c574c9cb5e99b123888c12b828e2d19224ab6c2244bda34647f230bf33243"
   name = "github.com/smartystreets/assertions"
   packages = [
@@ -225,6 +258,14 @@
   version = "1.6.3"
 
 [[projects]]
+  digest = "1:047d0bcf0ddb285f1b9d0e89a8286aa1c86d352cf1728a3262504507439f4773"
+  name = "github.com/taskcluster/httpbackoff"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "e5b331b1135fb39ad0395d49c1a880929629f5b4"
+  version = "v1.0.0"
+
+[[projects]]
   branch = "master"
   digest = "1:b6bbc489acd7bf1d4c6782138ffb75f46634007713795667ed7ad287fd80c070"
   name = "golang.org/x/net"
@@ -236,6 +277,18 @@
   ]
   pruneopts = "UT"
   revision = "915654e7eabcea33ae277abbecf52f0d8b7a9fdc"
+
+[[projects]]
+  branch = "master"
+  digest = "1:720b0de92f7ce47bb56528f7f25362f8173bbff69fd82190486a495693a8ccac"
+  name = "golang.org/x/sys"
+  packages = [
+    "internal/unsafeheader",
+    "unix",
+    "windows",
+  ]
+  pruneopts = "UT"
+  revision = "f84b799fce68db3cb46a8f6f819c1e56377181df"
 
 [[projects]]
   digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
@@ -272,14 +325,25 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/Nike-Inc/cerberus-go-client/api",
+    "github.com/Nike-Inc/cerberus-go-client/auth",
+    "github.com/Nike-Inc/cerberus-go-client/cerberus",
+    "github.com/Nike-Inc/cerberus-go-client/utils",
+    "github.com/Nike-Inc/cerberus-go-client/v3/api",
+    "github.com/Nike-Inc/cerberus-go-client/v3/auth",
+    "github.com/Nike-Inc/cerberus-go-client/v3/cerberus",
+    "github.com/Nike-Inc/cerberus-go-client/v3/utils",
     "github.com/aws/aws-sdk-go/aws/credentials",
     "github.com/aws/aws-sdk-go/aws/defaults",
     "github.com/aws/aws-sdk-go/aws/endpoints",
     "github.com/aws/aws-sdk-go/aws/signer/v4",
+    "github.com/cenkalti/backoff",
     "github.com/google/go-cmp/cmp",
     "github.com/hashicorp/vault/api",
     "github.com/satori/go.uuid",
+    "github.com/sirupsen/logrus",
     "github.com/smartystreets/goconvey/convey",
+    "github.com/taskcluster/httpbackoff",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
