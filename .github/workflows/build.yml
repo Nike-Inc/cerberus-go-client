@@ -28,6 +28,7 @@ jobs:
           cd go
           pwd
           ls
+          export PATH="/home/runner/work/cerberus-go-client/cerberus-go-client/go/bin:$PATH"
           cd src/cerberus-go-client
           if [ -f Gopkg.toml ]; then
               curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
@@ -35,7 +36,7 @@ jobs:
           fi
         env:
           GOPATH: /home/runner/work/cerberus-go-client/cerberus-go-client/go
-          GOBIN: /home/runner/work/cerberus-go-client/cerberus-go-client/go
+          GOBIN: /home/runner/work/cerberus-go-client/cerberus-go-client/go/bin
       - name: Test v1
         run: |
           pwd
