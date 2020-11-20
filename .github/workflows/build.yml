@@ -1,0 +1,60 @@
+name: Build
+on:
+  push:
+    branches:
+      - '**'
+  pull_request:
+    branches: [ master ]
+jobs:
+  Build:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Set up Go 1.x
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.15
+        env:
+          GOPATH: /home/runner/work/cerberus-go-client/cerberus-go-client/go
+          GOBIN: /home/runner/work/cerberus-go-client/cerbeurs-go-client/go/bin
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+        with:
+          path: go/src/cerberus-go-client
+      - name: Get dependencies
+        run: |
+          export PATH="/home/runner/work/cerberus-go-client/cerberus-go-client/go/bin:$PATH"
+          cd go/src/cerberus-go-client
+          if [ -f Gopkg.toml ]; then
+              curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
+              dep ensure -v
+          fi
+        env:
+          GOPATH: /home/runner/work/cerberus-go-client/cerberus-go-client/go
+          GOBIN: /home/runner/work/cerberus-go-client/cerberus-go-client/go/bin
+      - name: Test v1
+        run: |
+          cd go/src/cerberus-go-client
+          make test 2>&1
+        env:
+          GOPATH: /home/runner/work/cerberus-go-client/cerberus-go-client/go
+          GOBIN: /home/runner/work/cerberus-go-client/cerberus-go-client/go/bin
+      - name: Test v3
+        run: |
+          cd go/src/cerberus-go-client/v3
+          make test 2>&1
+      - name: Upload coverage report to CodeCov
+        uses: codecov/codecov-action@v1
+        with:
+          file: go/src/cerberus-go-client/coverage.txt # optional
+          fail_ci_if_error: true # optional (default = false)
+          verbose: true
+      - name: Slack notification when master build fails
+        if: ${{ failure() && github.ref == 'refs/heads/master'}}
+        uses: rtCamp/action-slack-notify@v2.1.0
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_CHANNEL: cerberus-alerts
+          SLACK_MESSAGE: 'Cerberus main build has failed :build-failed:'
+          SLACK_ICON: https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png
+          SLACK_TITLE: Cerberus Build Failure Notification
+          SLACK_USERNAME: GitHub Actions
