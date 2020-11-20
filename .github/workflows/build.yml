@@ -35,7 +35,7 @@ jobs:
           fi
         env:
           GOPATH: /home/runner/work/cerberus-go-client/cerberus-go-client/go
-          GOBIN: /home/runner/work/cerberus-go-client/cerbeurs-go-client/go/bin
+          GOBIN: /home/runner/work/cerberus-go-client/cerberus-go-client/go
       - name: Test v1
         run: |
           pwd
