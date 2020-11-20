@@ -31,8 +31,8 @@ jobs:
           GOPATH: /home/runner/work/cerberus-go-client/go
       - name: Test v1
         run: make test 2>&1
-          GOPATH: /home/runner/work/cerberus-go-client/go
         env:
+          GOPATH: /home/runner/work/cerberus-go-client/go
       - name: Test v3
         run: |
           cd v3
