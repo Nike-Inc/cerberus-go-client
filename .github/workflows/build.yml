@@ -23,6 +23,7 @@ jobs:
 
       - name: Get dependencies
         run: |
+          cd go/src/cerberus-go-client
           if [ -f Gopkg.toml ]; then
               curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
               dep ensure -v
@@ -39,8 +40,7 @@ jobs:
           GOPATH: /home/runner/work/cerberus-go-client/go
       - name: Test v3
         run: |
-          cd ../go/src/cerberus-go-client/v3
-          pwd
+          cd go/src/cerberus-go-client/v3
           make test 2>&1
         env:
           GOPATH: /home/runner/work/cerberus-go-client/go
