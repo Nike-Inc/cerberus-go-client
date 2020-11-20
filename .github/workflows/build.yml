@@ -15,14 +15,16 @@ jobs:
         uses: actions/setup-go@v2
         with:
           go-version: ^1.15
+        env:
+          GOPATH = /home/runner/work/cerberus-go-client/cerberus-go-client/go
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
         with:
-          path: /home/runner/go/src/cerberus-go-client
+          path: go/src/cerberus-go-client
       - name: Get dependencies
         run: |
-          cd /home/runner/go/src/cerberus-go-client
+          cd go/src/cerberus-go-client
           if [ -f Gopkg.toml ]; then
               curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
               dep ensure -v
@@ -30,12 +32,12 @@ jobs:
       - name: Test v1
         run: |
           pwd
-          cd /home/runner/go/src/cerberus-go-client
+          cd go/src/cerberus-go-client
           pwd
           make test 2>&1
       - name: Test v3
         run: |
-          cd /home/runner/go/src/cerberus-go-client/v3
+          cd go/src/cerberus-go-client/v3
           make test 2>&1
           cd ..
       - name: Upload coverage report to CodeCov
