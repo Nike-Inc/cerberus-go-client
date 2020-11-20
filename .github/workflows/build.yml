@@ -27,7 +27,8 @@ jobs:
           echo ${GOPATH}
           cd go
           mkdir bin
-          cd go/src/cerberus-go-client
+          ls
+          cd src/cerberus-go-client
           pwd
           if [ -f Gopkg.toml ]; then
               curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
