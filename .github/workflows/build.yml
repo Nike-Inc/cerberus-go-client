@@ -26,7 +26,7 @@ jobs:
           echo ${GOBIN}
           echo ${GOPATH}
           cd go
-          mkdir go/bin
+          mkdir bin
           cd go/src/cerberus-go-client
           pwd
           if [ -f Gopkg.toml ]; then
