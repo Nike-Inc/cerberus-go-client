@@ -16,7 +16,7 @@ jobs:
         with:
           go-version: ^1.15
         env:
-          GOPATH = /home/runner/work/cerberus-go-client/cerberus-go-client/go
+          GOPATH: /home/runner/work/cerberus-go-client/cerberus-go-client/go
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
