@@ -24,6 +24,8 @@ jobs:
       - name: Get dependencies
         run: |
           pwd
+          echo ${GOBIN}
+          echo ${GOPATH}
           mkdir go/bin
           cd go/src/cerberus-go-client
           pwd
