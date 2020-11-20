@@ -32,7 +32,7 @@ jobs:
       - name: Test v1
         run: |
           pwd
-          cd ../go/src/cerberus-go-client
+          cd go/src/cerberus-go-client
           pwd
           make test 2>&1
         env:
