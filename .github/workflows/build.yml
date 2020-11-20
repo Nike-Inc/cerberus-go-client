@@ -19,8 +19,8 @@ jobs:
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
         with:
-          fetch-depth: 1
           path: go/src/cerberus-go-client
+z
       - name: Get dependencies
         run: |
           pwd
@@ -35,8 +35,8 @@ jobs:
               dep ensure -v
           fi
         env:
-          GOPATH: /home/runner/work/cerberus-go-client/go
-          GOBIN: /home/runner/work/cerberus-go-cleint/go/bin
+          GOPATH: /home/runner/work/cerberus-go-client/cerberus-go-client/go
+          GOBIN: /home/runner/work/cerberus-go-cleint/cerberus-go-client/go/bin
       - name: Test v1
         run: |
           pwd
