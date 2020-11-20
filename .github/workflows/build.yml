@@ -32,12 +32,15 @@ jobs:
       - name: Test v1
         run: |
           pwd
+          cd ../go/src/cerberus-go-client
+          pwd
           make test 2>&1
         env:
           GOPATH: /home/runner/work/cerberus-go-client/go
       - name: Test v3
         run: |
-          cd v3
+          cd ../go/src/cerberus-go-client/v3
+          pwd
           make test 2>&1
         env:
           GOPATH: /home/runner/work/cerberus-go-client/go
