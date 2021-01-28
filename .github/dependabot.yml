@@ -6,9 +6,9 @@
 version: 2
 updates:
   - package-ecosystem: "gomod" # See documentation for possible values
+    vendor: true
     directory: "/" # Location of package manifests
     target-branch: dep/dependency_upgrade_staging
-    vendor: true
     open-pull-requests-limit: 50
     schedule:
       interval: "daily"
