@@ -3,7 +3,7 @@ module github.com/Nike-Inc/cerberus-go-client/v3
 go 1.15
 
 require (
-	github.com/aws/aws-sdk-go v1.35.11
+	github.com/aws/aws-sdk-go v1.37.0
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/google/go-cmp v0.5.1
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
@@ -17,8 +17,6 @@ require (
 	github.com/stretchr/testify v1.6.1 // indirect
 	github.com/taskcluster/httpbackoff v1.0.0
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a // indirect
-	golang.org/x/net v0.0.0-20200822124328-c89045814202 // indirect
-	golang.org/x/text v0.3.3 // indirect
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
