@@ -5,7 +5,7 @@ go 1.15
 require (
 	github.com/aws/aws-sdk-go v1.35.11
 	github.com/cenkalti/backoff v2.2.1+incompatible
-	github.com/google/go-cmp v0.5.1
+	github.com/google/go-cmp v0.5.4
 	github.com/gopherjs/gopherjs v0.0.0-20181103185306-d547d1d9531e // indirect
 	github.com/hashicorp/go-multierror v1.1.0 // indirect
 	github.com/hashicorp/go-rootcerts v1.0.2 // indirect
