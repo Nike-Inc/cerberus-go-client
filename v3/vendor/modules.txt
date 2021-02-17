@@ -79,6 +79,9 @@ github.com/hashicorp/vault/sdk/helper/strutil
 github.com/jmespath/go-jmespath
 # github.com/jtolds/gls v4.20.0+incompatible
 github.com/jtolds/gls
+# github.com/magefile/mage v1.10.0
+github.com/magefile/mage/mg
+github.com/magefile/mage/sh
 # github.com/mitchellh/go-homedir v1.1.0
 github.com/mitchellh/go-homedir
 # github.com/mitchellh/mapstructure v1.1.2
@@ -93,7 +96,7 @@ github.com/ryanuber/go-glob
 # github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 ## explicit
 github.com/satori/go.uuid
-# github.com/sirupsen/logrus v1.7.0
+# github.com/sirupsen/logrus v1.7.1
 ## explicit
 github.com/sirupsen/logrus
 # github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d
