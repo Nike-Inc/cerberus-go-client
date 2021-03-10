@@ -93,7 +93,7 @@ github.com/ryanuber/go-glob
 # github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b
 ## explicit
 github.com/satori/go.uuid
-# github.com/sirupsen/logrus v1.7.0
+# github.com/sirupsen/logrus v1.8.1
 ## explicit
 github.com/sirupsen/logrus
 # github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d
