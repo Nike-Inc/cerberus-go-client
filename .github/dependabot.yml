@@ -19,6 +19,5 @@ updates:
     open-pull-requests-limit: 20
     schedule:
       interval: "monthly"
-      day: "monday"
       time: "08:00"
       timezone: "America/Los_Angeles"
