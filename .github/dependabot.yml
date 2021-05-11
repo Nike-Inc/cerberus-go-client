@@ -8,18 +8,17 @@ updates:
   - package-ecosystem: "gomod" # See documentation for possible values
     directory: "/v3" # Location of package manifests
     target-branch: dep/dependency_upgrade_staging
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 20
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "monthly"
       time: "08:00"
       timezone: "America/Los_Angeles"
   - package-ecosystem: "github-actions"
     directory: "/"
     target-branch: dep/dependency_upgrade_staging
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 20
     schedule:
-      interval: "weekly"
+      interval: "monthly"
       day: "monday"
       time: "08:00"
       timezone: "America/Los_Angeles"
