@@ -149,7 +149,7 @@ import (
 
 	"github.com/Nike-Inc/cerberus-go-client/v3/cerberus"
 	"github.com/Nike-Inc/cerberus-go-client/v3/api"
-	"github.com/Nike-Inc/cerberus-go-client/v3.auth"
+	"github.com/Nike-Inc/cerberus-go-client/v3/auth"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
