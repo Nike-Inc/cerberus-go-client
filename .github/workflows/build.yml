@@ -20,17 +20,6 @@ jobs:
         uses: actions/checkout@v2
         with:
           path: go/src/cerberus-go-client
-      - name: Get dependencies
-        run: |
-          export PATH="/home/runner/work/cerberus-go-client/cerberus-go-client/go/bin:$PATH"
-          cd go/src/cerberus-go-client
-          if [ -f Gopkg.toml ]; then
-              curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-              dep ensure -v
-          fi
-        env:
-          GOPATH: /home/runner/work/cerberus-go-client/cerberus-go-client/go
-          GOBIN: /home/runner/work/cerberus-go-client/cerberus-go-client/go/bin
       - name: Test v1
         run: |
           cd go/src/cerberus-go-client

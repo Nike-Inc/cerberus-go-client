@@ -2,7 +2,11 @@ package api
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
 	"crypto/tls"
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"net"
 	"net/http"
@@ -19,31 +23,48 @@ import (
 	cleanhttp "github.com/hashicorp/go-cleanhttp"
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	rootcerts "github.com/hashicorp/go-rootcerts"
-	"github.com/hashicorp/vault/helper/consts"
-	"github.com/hashicorp/vault/helper/parseutil"
+	"github.com/hashicorp/go-secure-stdlib/parseutil"
 	"golang.org/x/net/http2"
 	"golang.org/x/time/rate"
+
+	"github.com/hashicorp/vault/sdk/helper/consts"
+	"github.com/hashicorp/vault/sdk/helper/strutil"
+	"github.com/hashicorp/vault/sdk/logical"
 )
 
-const EnvVaultAddress = "VAULT_ADDR"
-const EnvVaultCACert = "VAULT_CACERT"
-const EnvVaultCAPath = "VAULT_CAPATH"
-const EnvVaultClientCert = "VAULT_CLIENT_CERT"
-const EnvVaultClientKey = "VAULT_CLIENT_KEY"
-const EnvVaultClientTimeout = "VAULT_CLIENT_TIMEOUT"
-const EnvVaultInsecure = "VAULT_SKIP_VERIFY"
-const EnvVaultTLSServerName = "VAULT_TLS_SERVER_NAME"
-const EnvVaultWrapTTL = "VAULT_WRAP_TTL"
-const EnvVaultMaxRetries = "VAULT_MAX_RETRIES"
-const EnvVaultToken = "VAULT_TOKEN"
-const EnvVaultMFA = "VAULT_MFA"
-const EnvRateLimit = "VAULT_RATE_LIMIT"
+const (
+	EnvVaultAddress       = "VAULT_ADDR"
+	EnvVaultAgentAddr     = "VAULT_AGENT_ADDR"
+	EnvVaultCACert        = "VAULT_CACERT"
+	EnvVaultCAPath        = "VAULT_CAPATH"
+	EnvVaultClientCert    = "VAULT_CLIENT_CERT"
+	EnvVaultClientKey     = "VAULT_CLIENT_KEY"
+	EnvVaultClientTimeout = "VAULT_CLIENT_TIMEOUT"
+	EnvVaultSRVLookup     = "VAULT_SRV_LOOKUP"
+	EnvVaultSkipVerify    = "VAULT_SKIP_VERIFY"
+	EnvVaultNamespace     = "VAULT_NAMESPACE"
+	EnvVaultTLSServerName = "VAULT_TLS_SERVER_NAME"
+	EnvVaultWrapTTL       = "VAULT_WRAP_TTL"
+	EnvVaultMaxRetries    = "VAULT_MAX_RETRIES"
+	EnvVaultToken         = "VAULT_TOKEN"
+	EnvVaultMFA           = "VAULT_MFA"
+	EnvRateLimit          = "VAULT_RATE_LIMIT"
+	EnvHTTPProxy          = "VAULT_HTTP_PROXY"
+	HeaderIndex           = "X-Vault-Index"
+)
+
+// Deprecated values
+const (
+	EnvVaultAgentAddress = "VAULT_AGENT_ADDR"
+	EnvVaultInsecure     = "VAULT_SKIP_VERIFY"
+)
 
 // WrappingLookupFunc is a function that, given an HTTP verb and a path,
 // returns an optional string duration to be used for response wrapping (e.g.
 // "15s", or simply "15"). The path will not begin with "/v1/" or "v1/" or "/",
 // however, end-of-path forward slashes are not trimmed, so must match your
-// called path precisely.
+// called path precisely. Response wrapping will only be used when the return
+// value is not the empty string.
 type WrappingLookupFunc func(operation, path string) string
 
 // Config is used to configure the creation of the client.
@@ -56,12 +77,24 @@ type Config struct {
 	// HttpClient.
 	Address string
 
+	// AgentAddress is the address of the local Vault agent. This should be a
+	// complete URL such as "http://vault.example.com".
+	AgentAddress string
+
 	// HttpClient is the HTTP client to use. Vault sets sane defaults for the
 	// http.Client and its associated http.Transport created in DefaultConfig.
 	// If you must modify Vault's defaults, it is suggested that you start with
 	// that client and modify as needed rather than start with an empty client
 	// (or http.DefaultClient).
 	HttpClient *http.Client
+
+	// MinRetryWait controls the minimum time to wait before retrying when a 5xx
+	// error occurs. Defaults to 1000 milliseconds.
+	MinRetryWait time.Duration
+
+	// MaxRetryWait controls the maximum time to wait before retrying when a 5xx
+	// error occurs. Defaults to 1500 milliseconds.
+	MaxRetryWait time.Duration
 
 	// MaxRetries controls the maximum number of times to retry when a 5xx
 	// error occurs. Set to 0 to disable retrying. Defaults to 2 (for a total
@@ -78,12 +111,42 @@ type Config struct {
 	// The Backoff function to use; a default is used if not provided
 	Backoff retryablehttp.Backoff
 
+	// The CheckRetry function to use; a default is used if not provided
+	CheckRetry retryablehttp.CheckRetry
+
+	// Logger is the leveled logger to provide to the retryable HTTP client.
+	Logger retryablehttp.LeveledLogger
+
 	// Limiter is the rate limiter used by the client.
 	// If this pointer is nil, then there will be no limit set.
 	// In contrast, if this pointer is set, even to an empty struct,
 	// then that limiter will be used. Note that an empty Limiter
 	// is equivalent blocking all events.
 	Limiter *rate.Limiter
+
+	// OutputCurlString causes the actual request to return an error of type
+	// *OutputStringError. Type asserting the error message will allow
+	// fetching a cURL-compatible string for the operation.
+	//
+	// Note: It is not thread-safe to set this and make concurrent requests
+	// with the same client. Cloning a client will not clone this value.
+	OutputCurlString bool
+
+	// SRVLookup enables the client to lookup the host through DNS SRV lookup
+	SRVLookup bool
+
+	// CloneHeaders ensures that the source client's headers are copied to
+	// its clone.
+	CloneHeaders bool
+
+	// ReadYourWrites ensures isolated read-after-write semantics by
+	// providing discovered cluster replication states in each request.
+	// The shared state is automatically propagated to all Client clones.
+	//
+	// Note: Careful consideration should be made prior to enabling this setting
+	// since there will be a performance penalty paid upon each request.
+	// This feature requires Enterprise server-side.
+	ReadYourWrites bool
 }
 
 // TLSConfig contains the parameters needed to configure TLS on the HTTP client
@@ -120,10 +183,14 @@ type TLSConfig struct {
 // If an error is encountered, this will return nil.
 func DefaultConfig() *Config {
 	config := &Config{
-		Address:    "https://127.0.0.1:8200",
-		HttpClient: cleanhttp.DefaultPooledClient(),
+		Address:      "https://127.0.0.1:8200",
+		HttpClient:   cleanhttp.DefaultPooledClient(),
+		Timeout:      time.Second * 60,
+		MinRetryWait: time.Millisecond * 1000,
+		MaxRetryWait: time.Millisecond * 1500,
+		MaxRetries:   2,
+		Backoff:      retryablehttp.LinearJitterBackoff,
 	}
-	config.HttpClient.Timeout = time.Second * 60
 
 	transport := config.HttpClient.Transport.(*http.Transport)
 	transport.TLSHandshakeTimeout = 10 * time.Second
@@ -152,13 +219,10 @@ func DefaultConfig() *Config {
 		return http.ErrUseLastResponse
 	}
 
-	config.Backoff = retryablehttp.LinearJitterBackoff
-	config.MaxRetries = 2
-
 	return config
 }
 
-// ConfigureTLS takes a set of TLS configurations and applies those to the the
+// ConfigureTLS takes a set of TLS configurations and applies those to the
 // HTTP client.
 func (c *Config) ConfigureTLS(t *TLSConfig) error {
 	if c.HttpClient == nil {
@@ -215,6 +279,7 @@ func (c *Config) ConfigureTLS(t *TLSConfig) error {
 // there is an error, no configuration value is updated.
 func (c *Config) ReadEnvironment() error {
 	var envAddress string
+	var envAgentAddress string
 	var envCACert string
 	var envCAPath string
 	var envClientCert string
@@ -223,11 +288,18 @@ func (c *Config) ReadEnvironment() error {
 	var envInsecure bool
 	var envTLSServerName string
 	var envMaxRetries *uint64
+	var envSRVLookup bool
 	var limit *rate.Limiter
+	var envHTTPProxy string
 
 	// Parse the environment variables
 	if v := os.Getenv(EnvVaultAddress); v != "" {
 		envAddress = v
+	}
+	if v := os.Getenv(EnvVaultAgentAddr); v != "" {
+		envAgentAddress = v
+	} else if v := os.Getenv(EnvVaultAgentAddress); v != "" {
+		envAgentAddress = v
 	}
 	if v := os.Getenv(EnvVaultMaxRetries); v != "" {
 		maxRetries, err := strconv.ParseUint(v, 10, 32)
@@ -262,15 +334,33 @@ func (c *Config) ReadEnvironment() error {
 		}
 		envClientTimeout = clientTimeout
 	}
-	if v := os.Getenv(EnvVaultInsecure); v != "" {
+	if v := os.Getenv(EnvVaultSkipVerify); v != "" {
 		var err error
 		envInsecure, err = strconv.ParseBool(v)
 		if err != nil {
 			return fmt.Errorf("could not parse VAULT_SKIP_VERIFY")
 		}
+	} else if v := os.Getenv(EnvVaultInsecure); v != "" {
+		var err error
+		envInsecure, err = strconv.ParseBool(v)
+		if err != nil {
+			return fmt.Errorf("could not parse VAULT_INSECURE")
+		}
 	}
+	if v := os.Getenv(EnvVaultSRVLookup); v != "" {
+		var err error
+		envSRVLookup, err = strconv.ParseBool(v)
+		if err != nil {
+			return fmt.Errorf("could not parse %s", EnvVaultSRVLookup)
+		}
+	}
+
 	if v := os.Getenv(EnvVaultTLSServerName); v != "" {
 		envTLSServerName = v
+	}
+
+	if v := os.Getenv(EnvHTTPProxy); v != "" {
+		envHTTPProxy = v
 	}
 
 	// Configure the HTTP clients TLS configuration.
@@ -286,6 +376,7 @@ func (c *Config) ReadEnvironment() error {
 	c.modifyLock.Lock()
 	defer c.modifyLock.Unlock()
 
+	c.SRVLookup = envSRVLookup
 	c.Limiter = limit
 
 	if err := c.ConfigureTLS(t); err != nil {
@@ -296,6 +387,10 @@ func (c *Config) ReadEnvironment() error {
 		c.Address = envAddress
 	}
 
+	if envAgentAddress != "" {
+		c.AgentAddress = envAgentAddress
+	}
+
 	if envMaxRetries != nil {
 		c.MaxRetries = int(*envMaxRetries)
 	}
@@ -304,11 +399,20 @@ func (c *Config) ReadEnvironment() error {
 		c.Timeout = envClientTimeout
 	}
 
+	if envHTTPProxy != "" {
+		url, err := url.Parse(envHTTPProxy)
+		if err != nil {
+			return err
+		}
+
+		transport := c.HttpClient.Transport.(*http.Transport)
+		transport.Proxy = http.ProxyURL(url)
+	}
+
 	return nil
 }
 
 func parseRateLimit(val string) (rate float64, burst int, err error) {
-
 	_, err = fmt.Sscanf(val, "%f:%d", &rate, &burst)
 	if err != nil {
 		rate, err = strconv.ParseFloat(val, 64)
@@ -319,19 +423,21 @@ func parseRateLimit(val string) (rate float64, burst int, err error) {
 	}
 
 	return rate, burst, err
-
 }
 
 // Client is the client to the Vault API. Create a client with NewClient.
 type Client struct {
-	modifyLock         sync.RWMutex
-	addr               *url.URL
-	config             *Config
-	token              string
-	headers            http.Header
-	wrappingLookupFunc WrappingLookupFunc
-	mfaCreds           []string
-	policyOverride     bool
+	modifyLock            sync.RWMutex
+	addr                  *url.URL
+	config                *Config
+	token                 string
+	headers               http.Header
+	wrappingLookupFunc    WrappingLookupFunc
+	mfaCreds              []string
+	policyOverride        bool
+	requestCallbacks      []RequestCallback
+	responseCallbacks     []ResponseCallback
+	replicationStateStore *replicationStateStore
 }
 
 // NewClient returns a new client for the given configuration.
@@ -358,9 +464,12 @@ func NewClient(c *Config) (*Client, error) {
 	c.modifyLock.Lock()
 	defer c.modifyLock.Unlock()
 
-	u, err := url.Parse(c.Address)
-	if err != nil {
-		return nil, err
+	if c.MinRetryWait == 0 {
+		c.MinRetryWait = def.MinRetryWait
+	}
+
+	if c.MaxRetryWait == 0 {
+		c.MaxRetryWait = def.MaxRetryWait
 	}
 
 	if c.HttpClient == nil {
@@ -370,16 +479,81 @@ func NewClient(c *Config) (*Client, error) {
 		c.HttpClient.Transport = def.HttpClient.Transport
 	}
 
-	client := &Client{
-		addr:   u,
-		config: c,
+	address := c.Address
+	if c.AgentAddress != "" {
+		address = c.AgentAddress
 	}
+
+	u, err := url.Parse(address)
+	if err != nil {
+		return nil, err
+	}
+
+	if strings.HasPrefix(address, "unix://") {
+		socket := strings.TrimPrefix(address, "unix://")
+		transport := c.HttpClient.Transport.(*http.Transport)
+		transport.DialContext = func(context.Context, string, string) (net.Conn, error) {
+			return net.Dial("unix", socket)
+		}
+
+		// Since the address points to a unix domain socket, the scheme in the
+		// *URL would be set to `unix`. The *URL in the client is expected to
+		// be pointing to the protocol used in the application layer and not to
+		// the transport layer. Hence, setting the fields accordingly.
+		u.Scheme = "http"
+		u.Host = socket
+		u.Path = ""
+	}
+
+	client := &Client{
+		addr:    u,
+		config:  c,
+		headers: make(http.Header),
+	}
+
+	if c.ReadYourWrites {
+		client.replicationStateStore = &replicationStateStore{}
+	}
+
+	// Add the VaultRequest SSRF protection header
+	client.headers[consts.RequestHeaderName] = []string{"true"}
 
 	if token := os.Getenv(EnvVaultToken); token != "" {
 		client.token = token
 	}
 
+	if namespace := os.Getenv(EnvVaultNamespace); namespace != "" {
+		client.setNamespace(namespace)
+	}
+
 	return client, nil
+}
+
+func (c *Client) CloneConfig() *Config {
+	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
+
+	newConfig := DefaultConfig()
+	newConfig.Address = c.config.Address
+	newConfig.AgentAddress = c.config.AgentAddress
+	newConfig.MinRetryWait = c.config.MinRetryWait
+	newConfig.MaxRetryWait = c.config.MaxRetryWait
+	newConfig.MaxRetries = c.config.MaxRetries
+	newConfig.Timeout = c.config.Timeout
+	newConfig.Backoff = c.config.Backoff
+	newConfig.CheckRetry = c.config.CheckRetry
+	newConfig.Logger = c.config.Logger
+	newConfig.Limiter = c.config.Limiter
+	newConfig.OutputCurlString = c.config.OutputCurlString
+	newConfig.SRVLookup = c.config.SRVLookup
+	newConfig.CloneHeaders = c.config.CloneHeaders
+	newConfig.ReadYourWrites = c.config.ReadYourWrites
+
+	// we specifically want a _copy_ of the client here, not a pointer to the original one
+	newClient := *c.config.HttpClient
+	newConfig.HttpClient = &newClient
+
+	return newConfig
 }
 
 // Sets the address of Vault in the client. The format of address should be
@@ -394,6 +568,9 @@ func (c *Client) SetAddress(addr string) error {
 		return errwrap.Wrapf("failed to set address: {{err}}", err)
 	}
 
+	c.config.modifyLock.Lock()
+	c.config.Address = addr
+	c.config.modifyLock.Unlock()
 	c.addr = parsedAddr
 	return nil
 }
@@ -411,48 +588,166 @@ func (c *Client) Address() string {
 // rateLimit and burst are specified according to https://godoc.org/golang.org/x/time/rate#NewLimiter
 func (c *Client) SetLimiter(rateLimit float64, burst int) {
 	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
 	c.config.modifyLock.Lock()
 	defer c.config.modifyLock.Unlock()
-	c.modifyLock.RUnlock()
 
 	c.config.Limiter = rate.NewLimiter(rate.Limit(rateLimit), burst)
+}
+
+func (c *Client) Limiter() *rate.Limiter {
+	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
+	c.config.modifyLock.RLock()
+	defer c.config.modifyLock.RUnlock()
+
+	return c.config.Limiter
+}
+
+// SetMinRetryWait sets the minimum time to wait before retrying in the case of certain errors.
+func (c *Client) SetMinRetryWait(retryWait time.Duration) {
+	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
+	c.config.modifyLock.Lock()
+	defer c.config.modifyLock.Unlock()
+
+	c.config.MinRetryWait = retryWait
+}
+
+func (c *Client) MinRetryWait() time.Duration {
+	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
+	c.config.modifyLock.RLock()
+	defer c.config.modifyLock.RUnlock()
+
+	return c.config.MinRetryWait
+}
+
+// SetMaxRetryWait sets the maximum time to wait before retrying in the case of certain errors.
+func (c *Client) SetMaxRetryWait(retryWait time.Duration) {
+	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
+	c.config.modifyLock.Lock()
+	defer c.config.modifyLock.Unlock()
+
+	c.config.MaxRetryWait = retryWait
+}
+
+func (c *Client) MaxRetryWait() time.Duration {
+	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
+	c.config.modifyLock.RLock()
+	defer c.config.modifyLock.RUnlock()
+
+	return c.config.MaxRetryWait
 }
 
 // SetMaxRetries sets the number of retries that will be used in the case of certain errors
 func (c *Client) SetMaxRetries(retries int) {
 	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
 	c.config.modifyLock.Lock()
 	defer c.config.modifyLock.Unlock()
-	c.modifyLock.RUnlock()
 
 	c.config.MaxRetries = retries
+}
+
+func (c *Client) MaxRetries() int {
+	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
+	c.config.modifyLock.RLock()
+	defer c.config.modifyLock.RUnlock()
+
+	return c.config.MaxRetries
+}
+
+func (c *Client) SetSRVLookup(srv bool) {
+	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
+	c.config.modifyLock.Lock()
+	defer c.config.modifyLock.Unlock()
+
+	c.config.SRVLookup = srv
+}
+
+func (c *Client) SRVLookup() bool {
+	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
+	c.config.modifyLock.RLock()
+	defer c.config.modifyLock.RUnlock()
+
+	return c.config.SRVLookup
+}
+
+// SetCheckRetry sets the CheckRetry function to be used for future requests.
+func (c *Client) SetCheckRetry(checkRetry retryablehttp.CheckRetry) {
+	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
+	c.config.modifyLock.Lock()
+	defer c.config.modifyLock.Unlock()
+
+	c.config.CheckRetry = checkRetry
+}
+
+func (c *Client) CheckRetry() retryablehttp.CheckRetry {
+	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
+	c.config.modifyLock.RLock()
+	defer c.config.modifyLock.RUnlock()
+
+	return c.config.CheckRetry
 }
 
 // SetClientTimeout sets the client request timeout
 func (c *Client) SetClientTimeout(timeout time.Duration) {
 	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
 	c.config.modifyLock.Lock()
 	defer c.config.modifyLock.Unlock()
-	c.modifyLock.RUnlock()
 
 	c.config.Timeout = timeout
 }
 
+func (c *Client) ClientTimeout() time.Duration {
+	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
+	c.config.modifyLock.RLock()
+	defer c.config.modifyLock.RUnlock()
+
+	return c.config.Timeout
+}
+
+func (c *Client) OutputCurlString() bool {
+	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
+	c.config.modifyLock.RLock()
+	defer c.config.modifyLock.RUnlock()
+
+	return c.config.OutputCurlString
+}
+
+func (c *Client) SetOutputCurlString(curl bool) {
+	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
+	c.config.modifyLock.Lock()
+	defer c.config.modifyLock.Unlock()
+
+	c.config.OutputCurlString = curl
+}
+
 // CurrentWrappingLookupFunc sets a lookup function that returns desired wrap TTLs
-// for a given operation and path
+// for a given operation and path.
 func (c *Client) CurrentWrappingLookupFunc() WrappingLookupFunc {
 	c.modifyLock.RLock()
 	defer c.modifyLock.RUnlock()
-
 	return c.wrappingLookupFunc
 }
 
 // SetWrappingLookupFunc sets a lookup function that returns desired wrap TTLs
-// for a given operation and path
+// for a given operation and path.
 func (c *Client) SetWrappingLookupFunc(lookupFunc WrappingLookupFunc) {
 	c.modifyLock.Lock()
 	defer c.modifyLock.Unlock()
-
 	c.wrappingLookupFunc = lookupFunc
 }
 
@@ -461,7 +756,6 @@ func (c *Client) SetWrappingLookupFunc(lookupFunc WrappingLookupFunc) {
 func (c *Client) SetMFACreds(creds []string) {
 	c.modifyLock.Lock()
 	defer c.modifyLock.Unlock()
-
 	c.mfaCreds = creds
 }
 
@@ -470,7 +764,10 @@ func (c *Client) SetMFACreds(creds []string) {
 func (c *Client) SetNamespace(namespace string) {
 	c.modifyLock.Lock()
 	defer c.modifyLock.Unlock()
+	c.setNamespace(namespace)
+}
 
+func (c *Client) setNamespace(namespace string) {
 	if c.headers == nil {
 		c.headers = make(http.Header)
 	}
@@ -483,7 +780,6 @@ func (c *Client) SetNamespace(namespace string) {
 func (c *Client) Token() string {
 	c.modifyLock.RLock()
 	defer c.modifyLock.RUnlock()
-
 	return c.token
 }
 
@@ -492,7 +788,6 @@ func (c *Client) Token() string {
 func (c *Client) SetToken(v string) {
 	c.modifyLock.Lock()
 	defer c.modifyLock.Unlock()
-
 	c.token = v
 }
 
@@ -500,12 +795,11 @@ func (c *Client) SetToken(v string) {
 func (c *Client) ClearToken() {
 	c.modifyLock.Lock()
 	defer c.modifyLock.Unlock()
-
 	c.token = ""
 }
 
 // Headers gets the current set of headers used for requests. This returns a
-// copy; to modify it make modifications locally and use SetHeaders.
+// copy; to modify it call AddHeader or SetHeaders.
 func (c *Client) Headers() http.Header {
 	c.modifyLock.RLock()
 	defer c.modifyLock.RUnlock()
@@ -524,22 +818,85 @@ func (c *Client) Headers() http.Header {
 	return ret
 }
 
-// SetHeaders sets the headers to be used for future requests.
+// AddHeader allows a single header key/value pair to be added
+// in a race-safe fashion.
+func (c *Client) AddHeader(key, value string) {
+	c.modifyLock.Lock()
+	defer c.modifyLock.Unlock()
+	c.headers.Add(key, value)
+}
+
+// SetHeaders clears all previous headers and uses only the given
+// ones going forward.
 func (c *Client) SetHeaders(headers http.Header) {
 	c.modifyLock.Lock()
 	defer c.modifyLock.Unlock()
-
 	c.headers = headers
 }
 
 // SetBackoff sets the backoff function to be used for future requests.
 func (c *Client) SetBackoff(backoff retryablehttp.Backoff) {
 	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
 	c.config.modifyLock.Lock()
 	defer c.config.modifyLock.Unlock()
-	c.modifyLock.RUnlock()
 
 	c.config.Backoff = backoff
+}
+
+func (c *Client) SetLogger(logger retryablehttp.LeveledLogger) {
+	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
+	c.config.modifyLock.Lock()
+	defer c.config.modifyLock.Unlock()
+
+	c.config.Logger = logger
+}
+
+// SetCloneHeaders to allow headers to be copied whenever the client is cloned.
+func (c *Client) SetCloneHeaders(cloneHeaders bool) {
+	c.modifyLock.Lock()
+	defer c.modifyLock.Unlock()
+	c.config.modifyLock.Lock()
+	defer c.config.modifyLock.Unlock()
+
+	c.config.CloneHeaders = cloneHeaders
+}
+
+// CloneHeaders gets the configured CloneHeaders value.
+func (c *Client) CloneHeaders() bool {
+	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
+	c.config.modifyLock.RLock()
+	defer c.config.modifyLock.RUnlock()
+
+	return c.config.CloneHeaders
+}
+
+// SetReadYourWrites to prevent reading stale cluster replication state.
+func (c *Client) SetReadYourWrites(preventStaleReads bool) {
+	c.modifyLock.Lock()
+	defer c.modifyLock.Unlock()
+	c.config.modifyLock.Lock()
+	defer c.config.modifyLock.Unlock()
+
+	if preventStaleReads && c.replicationStateStore == nil {
+		c.replicationStateStore = &replicationStateStore{}
+	} else {
+		c.replicationStateStore = nil
+	}
+
+	c.config.ReadYourWrites = preventStaleReads
+}
+
+// ReadYourWrites gets the configured value of ReadYourWrites
+func (c *Client) ReadYourWrites() bool {
+	c.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
+	c.config.modifyLock.RLock()
+	defer c.config.modifyLock.RUnlock()
+
+	return c.config.ReadYourWrites
 }
 
 // Clone creates a new client with the same configuration. Note that the same
@@ -552,21 +909,41 @@ func (c *Client) SetBackoff(backoff retryablehttp.Backoff) {
 // behavior, must currently then be set as desired on the new client.
 func (c *Client) Clone() (*Client, error) {
 	c.modifyLock.RLock()
-	c.config.modifyLock.RLock()
+	defer c.modifyLock.RUnlock()
+
 	config := c.config
-	c.modifyLock.RUnlock()
+	config.modifyLock.RLock()
+	defer config.modifyLock.RUnlock()
 
 	newConfig := &Config{
-		Address:    config.Address,
-		HttpClient: config.HttpClient,
-		MaxRetries: config.MaxRetries,
-		Timeout:    config.Timeout,
-		Backoff:    config.Backoff,
-		Limiter:    config.Limiter,
+		Address:          config.Address,
+		HttpClient:       config.HttpClient,
+		MinRetryWait:     config.MinRetryWait,
+		MaxRetryWait:     config.MaxRetryWait,
+		MaxRetries:       config.MaxRetries,
+		Timeout:          config.Timeout,
+		Backoff:          config.Backoff,
+		CheckRetry:       config.CheckRetry,
+		Logger:           config.Logger,
+		Limiter:          config.Limiter,
+		OutputCurlString: config.OutputCurlString,
+		AgentAddress:     config.AgentAddress,
+		SRVLookup:        config.SRVLookup,
+		CloneHeaders:     config.CloneHeaders,
+		ReadYourWrites:   config.ReadYourWrites,
 	}
-	config.modifyLock.RUnlock()
+	client, err := NewClient(newConfig)
+	if err != nil {
+		return nil, err
+	}
 
-	return NewClient(newConfig)
+	if config.CloneHeaders {
+		client.SetHeaders(c.Headers().Clone())
+	}
+
+	client.replicationStateStore = c.replicationStateStore
+
+	return client, nil
 }
 
 // SetPolicyOverride sets whether requests should be sent with the policy
@@ -575,7 +952,6 @@ func (c *Client) Clone() (*Client, error) {
 func (c *Client) SetPolicyOverride(override bool) {
 	c.modifyLock.Lock()
 	defer c.modifyLock.Unlock()
-
 	c.policyOverride = override
 }
 
@@ -588,15 +964,14 @@ func (c *Client) NewRequest(method, requestPath string) *Request {
 	token := c.token
 	mfaCreds := c.mfaCreds
 	wrappingLookupFunc := c.wrappingLookupFunc
-	headers := c.headers
 	policyOverride := c.policyOverride
 	c.modifyLock.RUnlock()
 
+	host := addr.Host
 	// if SRV records exist (see https://tools.ietf.org/html/draft-andrews-http-srv-02), lookup the SRV
 	// record and take the highest match; this is not designed for high-availability, just discovery
-	var host string = addr.Host
-	if addr.Port() == "" {
-		// Internet Draft specifies that the SRV record is ignored if a port is given
+	// Internet Draft specifies that the SRV record is ignored if a port is given
+	if addr.Port() == "" && c.config.SRVLookup {
 		_, addrs, err := net.LookupSRV("http", "tcp", addr.Hostname())
 		if err == nil && len(addrs) > 0 {
 			host = fmt.Sprintf("%s:%d", addrs[0].Target, addrs[0].Port)
@@ -611,6 +986,7 @@ func (c *Client) NewRequest(method, requestPath string) *Request {
 			Host:   host,
 			Path:   path.Join(addr.Path, requestPath),
 		},
+		Host:        addr.Host,
 		ClientToken: token,
 		Params:      make(map[string][]string),
 	}
@@ -633,10 +1009,7 @@ func (c *Client) NewRequest(method, requestPath string) *Request {
 		req.WrapTTL = DefaultWrappingLookupFunc(method, lookupPath)
 	}
 
-	if headers != nil {
-		req.Headers = headers
-	}
-
+	req.Headers = c.Headers()
 	req.PolicyOverride = policyOverride
 
 	return req
@@ -658,13 +1031,26 @@ func (c *Client) RawRequestWithContext(ctx context.Context, r *Request) (*Respon
 
 	c.config.modifyLock.RLock()
 	limiter := c.config.Limiter
+	minRetryWait := c.config.MinRetryWait
+	maxRetryWait := c.config.MaxRetryWait
 	maxRetries := c.config.MaxRetries
+	checkRetry := c.config.CheckRetry
 	backoff := c.config.Backoff
 	httpClient := c.config.HttpClient
 	timeout := c.config.Timeout
+	outputCurlString := c.config.OutputCurlString
+	logger := c.config.Logger
 	c.config.modifyLock.RUnlock()
 
 	c.modifyLock.RUnlock()
+
+	for _, cb := range c.requestCallbacks {
+		cb(r)
+	}
+
+	if c.config.ReadYourWrites {
+		c.replicationStateStore.requireState(r)
+	}
 
 	if limiter != nil {
 		limiter.Wait(ctx)
@@ -688,7 +1074,19 @@ START:
 		return nil, fmt.Errorf("nil request created")
 	}
 
+	if outputCurlString {
+		LastOutputStringError = &OutputStringError{
+			Request:       req,
+			TLSSkipVerify: c.config.HttpClient.Transport.(*http.Transport).TLSClientConfig.InsecureSkipVerify,
+		}
+		return nil, LastOutputStringError
+	}
+
 	if timeout != 0 {
+		// Note: we purposefully do not call cancel manually. The reason is
+		// when canceled, the request.Body will EOF when reading due to the way
+		// it streams data in. Cancel will still be run when the timeout is
+		// hit, so this doesn't really harm anything.
 		ctx, _ = context.WithTimeout(ctx, timeout)
 	}
 	req.Request = req.Request.WithContext(ctx)
@@ -697,13 +1095,18 @@ START:
 		backoff = retryablehttp.LinearJitterBackoff
 	}
 
+	if checkRetry == nil {
+		checkRetry = DefaultRetryPolicy
+	}
+
 	client := &retryablehttp.Client{
 		HTTPClient:   httpClient,
-		RetryWaitMin: 1000 * time.Millisecond,
-		RetryWaitMax: 1500 * time.Millisecond,
+		RetryWaitMin: minRetryWait,
+		RetryWaitMax: maxRetryWait,
 		RetryMax:     maxRetries,
-		CheckRetry:   retryablehttp.DefaultRetryPolicy,
 		Backoff:      backoff,
+		CheckRetry:   checkRetry,
+		Logger:       logger,
 		ErrorHandler: retryablehttp.PassthroughErrorHandler,
 	}
 
@@ -755,9 +1158,236 @@ START:
 		goto START
 	}
 
+	if result != nil {
+		for _, cb := range c.responseCallbacks {
+			cb(result)
+		}
+
+		if c.config.ReadYourWrites {
+			c.replicationStateStore.recordState(result)
+		}
+	}
 	if err := result.Error(); err != nil {
 		return result, err
 	}
 
 	return result, nil
+}
+
+type (
+	RequestCallback  func(*Request)
+	ResponseCallback func(*Response)
+)
+
+// WithRequestCallbacks makes a shallow clone of Client, modifies it to use
+// the given callbacks, and returns it.  Each of the callbacks will be invoked
+// on every outgoing request.  A client may be used to issue requests
+// concurrently; any locking needed by callbacks invoked concurrently is the
+// callback's responsibility.
+func (c *Client) WithRequestCallbacks(callbacks ...RequestCallback) *Client {
+	c2 := *c
+	c2.modifyLock = sync.RWMutex{}
+	c2.requestCallbacks = callbacks
+	return &c2
+}
+
+// WithResponseCallbacks makes a shallow clone of Client, modifies it to use
+// the given callbacks, and returns it.  Each of the callbacks will be invoked
+// on every received response.  A client may be used to issue requests
+// concurrently; any locking needed by callbacks invoked concurrently is the
+// callback's responsibility.
+func (c *Client) WithResponseCallbacks(callbacks ...ResponseCallback) *Client {
+	c2 := *c
+	c2.modifyLock = sync.RWMutex{}
+	c2.responseCallbacks = callbacks
+	return &c2
+}
+
+// RecordState returns a response callback that will record the state returned
+// by Vault in a response header.
+func RecordState(state *string) ResponseCallback {
+	return func(resp *Response) {
+		*state = resp.Header.Get(HeaderIndex)
+	}
+}
+
+// RequireState returns a request callback that will add a request header to
+// specify the state we require of Vault. This state was obtained from a
+// response header seen previous, probably captured with RecordState.
+func RequireState(states ...string) RequestCallback {
+	return func(req *Request) {
+		for _, s := range states {
+			req.Headers.Add(HeaderIndex, s)
+		}
+	}
+}
+
+// compareReplicationStates returns 1 if s1 is newer or identical, -1 if s1 is older, and 0
+// if neither s1 or s2 is strictly greater. An error is returned if s1 or s2
+// are invalid or from different clusters.
+func compareReplicationStates(s1, s2 string) (int, error) {
+	w1, err := ParseReplicationState(s1, nil)
+	if err != nil {
+		return 0, err
+	}
+	w2, err := ParseReplicationState(s2, nil)
+	if err != nil {
+		return 0, err
+	}
+
+	if w1.ClusterID != w2.ClusterID {
+		return 0, fmt.Errorf("can't compare replication states with different ClusterIDs")
+	}
+
+	switch {
+	case w1.LocalIndex >= w2.LocalIndex && w1.ReplicatedIndex >= w2.ReplicatedIndex:
+		return 1, nil
+	// We've already handled the case where both are equal above, so really we're
+	// asking here if one or both are lesser.
+	case w1.LocalIndex <= w2.LocalIndex && w1.ReplicatedIndex <= w2.ReplicatedIndex:
+		return -1, nil
+	}
+
+	return 0, nil
+}
+
+// MergeReplicationStates returns a merged array of replication states by iterating
+// through all states in `old`. An iterated state is merged to the result before `new`
+// based on the result of compareReplicationStates
+func MergeReplicationStates(old []string, new string) []string {
+	if len(old) == 0 || len(old) > 2 {
+		return []string{new}
+	}
+
+	var ret []string
+	for _, o := range old {
+		c, err := compareReplicationStates(o, new)
+		if err != nil {
+			return []string{new}
+		}
+		switch c {
+		case 1:
+			ret = append(ret, o)
+		case -1:
+			ret = append(ret, new)
+		case 0:
+			ret = append(ret, o, new)
+		}
+	}
+	return strutil.RemoveDuplicates(ret, false)
+}
+
+func ParseReplicationState(raw string, hmacKey []byte) (*logical.WALState, error) {
+	cooked, err := base64.StdEncoding.DecodeString(raw)
+	if err != nil {
+		return nil, err
+	}
+	s := string(cooked)
+
+	lastIndex := strings.LastIndexByte(s, ':')
+	if lastIndex == -1 {
+		return nil, fmt.Errorf("invalid full state header format")
+	}
+	state, stateHMACRaw := s[:lastIndex], s[lastIndex+1:]
+	stateHMAC, err := hex.DecodeString(stateHMACRaw)
+	if err != nil {
+		return nil, fmt.Errorf("invalid state header HMAC: %v, %w", stateHMACRaw, err)
+	}
+
+	if len(hmacKey) != 0 {
+		hm := hmac.New(sha256.New, hmacKey)
+		hm.Write([]byte(state))
+		if !hmac.Equal(hm.Sum(nil), stateHMAC) {
+			return nil, fmt.Errorf("invalid state header HMAC (mismatch)")
+		}
+	}
+
+	pieces := strings.Split(state, ":")
+	if len(pieces) != 4 || pieces[0] != "v1" || pieces[1] == "" {
+		return nil, fmt.Errorf("invalid state header format")
+	}
+	localIndex, err := strconv.ParseUint(pieces[2], 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid local index in state header: %w", err)
+	}
+	replicatedIndex, err := strconv.ParseUint(pieces[3], 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("invalid replicated index in state header: %w", err)
+	}
+
+	return &logical.WALState{
+		ClusterID:       pieces[1],
+		LocalIndex:      localIndex,
+		ReplicatedIndex: replicatedIndex,
+	}, nil
+}
+
+// ForwardInconsistent returns a request callback that will add a request
+// header which says: if the state required isn't present on the node receiving
+// this request, forward it to the active node.  This should be used in
+// conjunction with RequireState.
+func ForwardInconsistent() RequestCallback {
+	return func(req *Request) {
+		req.Headers.Set("X-Vault-Inconsistent", "forward-active-node")
+	}
+}
+
+// ForwardAlways returns a request callback which adds a header telling any
+// performance standbys handling the request to forward it to the active node.
+// This feature must be enabled in Vault's configuration.
+func ForwardAlways() RequestCallback {
+	return func(req *Request) {
+		req.Headers.Set("X-Vault-Forward", "active-node")
+	}
+}
+
+// DefaultRetryPolicy is the default retry policy used by new Client objects.
+// It is the same as retryablehttp.DefaultRetryPolicy except that it also retries
+// 412 requests, which are returned by Vault when a X-Vault-Index header isn't
+// satisfied.
+func DefaultRetryPolicy(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	retry, err := retryablehttp.DefaultRetryPolicy(ctx, resp, err)
+	if err != nil || retry {
+		return retry, err
+	}
+	if resp != nil && resp.StatusCode == 412 {
+		return true, nil
+	}
+	return false, nil
+}
+
+// replicationStateStore is used to track cluster replication states
+// in order to ensure proper read-after-write semantics for a Client.
+type replicationStateStore struct {
+	m     sync.RWMutex
+	store []string
+}
+
+// recordState updates the store's replication states with the merger of all
+// states.
+func (w *replicationStateStore) recordState(resp *Response) {
+	w.m.Lock()
+	defer w.m.Unlock()
+	newState := resp.Header.Get(HeaderIndex)
+	if newState != "" {
+		w.store = MergeReplicationStates(w.store, newState)
+	}
+}
+
+// requireState updates the Request with the store's current replication states.
+func (w *replicationStateStore) requireState(req *Request) {
+	w.m.RLock()
+	defer w.m.RUnlock()
+	for _, s := range w.store {
+		req.Headers.Add(HeaderIndex, s)
+	}
+}
+
+// states currently stored.
+func (w *replicationStateStore) states() []string {
+	w.m.RLock()
+	defer w.m.RUnlock()
+	c := make([]string, len(w.store))
+	copy(c, w.store)
+	return c
 }
