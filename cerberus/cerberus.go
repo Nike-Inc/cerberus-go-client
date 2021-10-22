@@ -90,7 +90,6 @@ func NewClientWithHeaders(authMethod auth.Auth, otpFile *os.File, defaultHeaders
 	}, nil
 }
 
-
 // SDB returns the SDB client
 func (c *Client) SDB() *SDB {
 	return &SDB{
@@ -211,5 +210,3 @@ func parseResponse(r io.Reader, parseTo interface{}) error {
 	// Decode the body into the provided interface
 	return json.NewDecoder(r).Decode(parseTo)
 }
-
-
