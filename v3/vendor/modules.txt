@@ -96,11 +96,12 @@ github.com/satori/go.uuid
 # github.com/sirupsen/logrus v1.8.1
 ## explicit
 github.com/sirupsen/logrus
-# github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d
+# github.com/smartystreets/assertions v1.2.0
 github.com/smartystreets/assertions
+github.com/smartystreets/assertions/internal/go-diff/diffmatchpatch
 github.com/smartystreets/assertions/internal/go-render/render
 github.com/smartystreets/assertions/internal/oglematchers
-# github.com/smartystreets/goconvey v1.6.4
+# github.com/smartystreets/goconvey v1.7.2
 ## explicit
 github.com/smartystreets/goconvey/convey
 github.com/smartystreets/goconvey/convey/gotest
