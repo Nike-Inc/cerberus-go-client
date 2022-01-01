@@ -129,12 +129,13 @@ func (c *Sys) MountConfig(path string) (*MountConfigOutput, error) {
 }
 
 type MountInput struct {
-	Type        string            `json:"type"`
-	Description string            `json:"description"`
-	Config      MountConfigInput  `json:"config"`
-	Local       bool              `json:"local"`
-	SealWrap    bool              `json:"seal_wrap" mapstructure:"seal_wrap"`
-	Options     map[string]string `json:"options"`
+	Type                  string            `json:"type"`
+	Description           string            `json:"description"`
+	Config                MountConfigInput  `json:"config"`
+	Local                 bool              `json:"local"`
+	SealWrap              bool              `json:"seal_wrap" mapstructure:"seal_wrap"`
+	ExternalEntropyAccess bool              `json:"external_entropy_access" mapstructure:"external_entropy_access"`
+	Options               map[string]string `json:"options"`
 
 	// Deprecated: Newer server responses should be returning this information in the
 	// Type field (json: "type") instead.
@@ -153,20 +154,22 @@ type MountConfigInput struct {
 	PassthroughRequestHeaders []string          `json:"passthrough_request_headers,omitempty" mapstructure:"passthrough_request_headers"`
 	AllowedResponseHeaders    []string          `json:"allowed_response_headers,omitempty" mapstructure:"allowed_response_headers"`
 	TokenType                 string            `json:"token_type,omitempty" mapstructure:"token_type"`
+	AllowedManagedKeys        []string          `json:"allowed_managed_keys,omitempty" mapstructure:"allowed_managed_keys"`
 
 	// Deprecated: This field will always be blank for newer server responses.
 	PluginName string `json:"plugin_name,omitempty" mapstructure:"plugin_name"`
 }
 
 type MountOutput struct {
-	UUID        string            `json:"uuid"`
-	Type        string            `json:"type"`
-	Description string            `json:"description"`
-	Accessor    string            `json:"accessor"`
-	Config      MountConfigOutput `json:"config"`
-	Options     map[string]string `json:"options"`
-	Local       bool              `json:"local"`
-	SealWrap    bool              `json:"seal_wrap" mapstructure:"seal_wrap"`
+	UUID                  string            `json:"uuid"`
+	Type                  string            `json:"type"`
+	Description           string            `json:"description"`
+	Accessor              string            `json:"accessor"`
+	Config                MountConfigOutput `json:"config"`
+	Options               map[string]string `json:"options"`
+	Local                 bool              `json:"local"`
+	SealWrap              bool              `json:"seal_wrap" mapstructure:"seal_wrap"`
+	ExternalEntropyAccess bool              `json:"external_entropy_access" mapstructure:"external_entropy_access"`
 }
 
 type MountConfigOutput struct {
@@ -179,6 +182,7 @@ type MountConfigOutput struct {
 	PassthroughRequestHeaders []string `json:"passthrough_request_headers,omitempty" mapstructure:"passthrough_request_headers"`
 	AllowedResponseHeaders    []string `json:"allowed_response_headers,omitempty" mapstructure:"allowed_response_headers"`
 	TokenType                 string   `json:"token_type,omitempty" mapstructure:"token_type"`
+	AllowedManagedKeys        []string `json:"allowed_managed_keys,omitempty" mapstructure:"allowed_managed_keys"`
 
 	// Deprecated: This field will always be blank for newer server responses.
 	PluginName string `json:"plugin_name,omitempty" mapstructure:"plugin_name"`
