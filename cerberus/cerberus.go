@@ -20,11 +20,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/Nike-Inc/cerberus-go-client/utils"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
+
+	"github.com/Nike-Inc/cerberus-go-client/utils"
 
 	"github.com/Nike-Inc/cerberus-go-client/auth"
 	vault "github.com/hashicorp/vault/api"

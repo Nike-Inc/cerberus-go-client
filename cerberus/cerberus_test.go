@@ -243,7 +243,7 @@ func TestDoRequest(t *testing.T) {
 		"rightOut":                  "5",
 	}
 	expectedHeader := http.Header{}
-	expectedHeader.Set("X-Cerberus-Client", "CerberusGoClient/2.4.2")
+	expectedHeader.Set("X-Cerberus-Client", api.ClientHeader)
 	Convey("Valid GET request", t, WithServer(http.StatusOK, false, "/v1/blah", http.MethodGet, "", map[string]string{}, expectedHeader, func(ts *httptest.Server) {
 		cl, _ := NewClient(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil)
 		So(cl, ShouldNotBeNil)
