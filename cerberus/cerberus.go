@@ -20,11 +20,12 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/Nike-Inc/cerberus-go-client/utils"
 	"io"
 	"net/http"
 	"net/url"
 	"os"
+
+	"github.com/Nike-Inc/cerberus-go-client/utils"
 
 	"github.com/Nike-Inc/cerberus-go-client/auth"
 	vault "github.com/hashicorp/vault/api"
@@ -89,7 +90,6 @@ func NewClientWithHeaders(authMethod auth.Auth, otpFile *os.File, defaultHeaders
 		httpClient:     utils.NewHttpClient(defaultHeaders),
 	}, nil
 }
-
 
 // SDB returns the SDB client
 func (c *Client) SDB() *SDB {
@@ -211,5 +211,3 @@ func parseResponse(r io.Reader, parseTo interface{}) error {
 	// Decode the body into the provided interface
 	return json.NewDecoder(r).Decode(parseTo)
 }
-
-
