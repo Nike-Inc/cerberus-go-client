@@ -304,6 +304,90 @@ func TestGetByName(t *testing.T) {
 	})
 }
 
+func TestGetByPath(t *testing.T) {
+	var validResponse = `[
+		{
+			"id": "fb013540-fb5f-11e5-ba72-e899458df21a",
+			"name": "Web",
+			"path": "app/web/",
+			"category_id": "f7ff85a0-faaa-11e5-a8a9-7fa3b294cd46"
+		},
+		{
+			"id": "06f82494-fb60-11e5-ba72-e899458df21a",
+			"name": "OneLogin",
+			"path": "shared/onelogin",
+			"category_id": "f7ffb890-faaa-11e5-a8a9-7fa3b294cd46"
+		}
+	]`
+
+	var expectedResponse = &api.SafeDepositBox{
+		ID:         "fb013540-fb5f-11e5-ba72-e899458df21a",
+		Name:       "Web",
+		Path:       "app/web/",
+		CategoryID: "f7ff85a0-faaa-11e5-a8a9-7fa3b294cd46",
+	}
+
+	Convey("A valid call to GetByPath without a trailing slash", t, WithTestServer(http.StatusOK, "/v2/safe-deposit-box", http.MethodGet, validResponse, func(ts *httptest.Server) {
+		cl, _ := NewClient(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil)
+		So(cl, ShouldNotBeNil)
+		Convey("Should return a valid SDB", func() {
+			box, err := cl.SDB().GetByPath("app/web")
+			So(err, ShouldBeNil)
+			So(box, ShouldResemble, expectedResponse)
+		})
+	}))
+
+	Convey("A valid call to GetByPath with a trailing slash", t, WithTestServer(http.StatusOK, "/v2/safe-deposit-box", http.MethodGet, validResponse, func(ts *httptest.Server) {
+		cl, _ := NewClient(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil)
+		So(cl, ShouldNotBeNil)
+		Convey("Should return a valid SDB", func() {
+			box, err := cl.SDB().GetByPath("app/web/")
+			So(err, ShouldBeNil)
+			So(box, ShouldResemble, expectedResponse)
+		})
+	}))
+
+	Convey("GetByPath given an invalid path", t, WithTestServer(http.StatusOK, "/v2/safe-deposit-box", http.MethodGet, validResponse, func(ts *httptest.Server) {
+		cl, _ := NewClient(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil)
+		So(cl, ShouldNotBeNil)
+		Convey("Should return SDB not found error", func() {
+			box, err := cl.SDB().GetByPath("app/blah")
+			So(err, ShouldEqual, ErrorSafeDepositBoxNotFound)
+			So(box, ShouldBeNil)
+		})
+	}))
+
+	Convey("A call to GetByPath with an empty path", t, func() {
+		cl, _ := NewClient(GenerateMockAuth("http://127.0.0.1:32876", "a-cool-token", false, false), nil)
+		So(cl, ShouldNotBeNil)
+		Convey("Should return an error", func() {
+			box, err := cl.SDB().GetByPath("")
+			So(err, ShouldNotBeNil)
+			So(box, ShouldBeNil)
+		})
+	})
+
+	Convey("A call to GetByPath that encounters a server error", t, WithTestServer(http.StatusInternalServerError, "/v2/safe-deposit-box", http.MethodGet, validResponse, func(ts *httptest.Server) {
+		cl, _ := NewClient(GenerateMockAuth(ts.URL, "a-cool-token", false, false), nil)
+		So(cl, ShouldNotBeNil)
+		Convey("Should return an error", func() {
+			box, err := cl.SDB().GetByPath("app/web")
+			So(err, ShouldNotBeNil)
+			So(box, ShouldBeNil)
+		})
+	}))
+
+	Convey("A GetByPath to a non-responsive server", t, func() {
+		cl, _ := NewClient(GenerateMockAuth("http://127.0.0.1:32876", "a-cool-token", false, false), nil)
+		So(cl, ShouldNotBeNil)
+		Convey("Should return an error", func() {
+			box, err := cl.SDB().GetByPath("app/web")
+			So(err, ShouldNotBeNil)
+			So(box, ShouldBeNil)
+		})
+	})
+}
+
 func TestCreateSDB(t *testing.T) {
 	var id = "a7d703da-faac-11e5-a8a9-7fa3b294cd46"
 	var validResponse = `{

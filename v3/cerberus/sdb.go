@@ -18,11 +18,11 @@ package cerberus
 
 import (
 	"fmt"
-	"github.com/Nike-Inc/cerberus-go-client/v3/utils"
 	"net/http"
 	"strings"
 
 	"github.com/Nike-Inc/cerberus-go-client/v3/api"
+	"github.com/Nike-Inc/cerberus-go-client/v3/utils"
 )
 
 // ErrorSafeDepositBoxNotFound is returned when a specified deposit box is not found
@@ -51,6 +51,26 @@ func (s *SDB) GetByName(name string) (*api.SafeDepositBox, error) {
 			return v, nil
 		}
 	}
+	// If we didn't find it in the list, return error that it wasn't found
+	return nil, ErrorSafeDepositBoxNotFound
+}
+
+// GetByPath is a helper method that takes an SDB path and attempts
+// to locate that box in a list of SDBs the client has access to
+func (s *SDB) GetByPath(path string) (*api.SafeDepositBox, error) {
+	if len(path) == 0 {
+		return nil, ErrorSafeDepositBoxNotFound
+	}
+	allSDBs, err := s.List()
+	if err != nil {
+		return nil, err
+	}
+	for _, sdb := range allSDBs {
+		if sdb.Path == path || sdb.Path == path+"/" {
+			return sdb, nil
+		}
+	}
+
 	// If we didn't find it in the list, return error that it wasn't found
 	return nil, ErrorSafeDepositBoxNotFound
 }
