@@ -39,35 +39,35 @@ type SDB struct {
 // GetByName is a helper method that takes a SDB name and attempts
 // to locate that box in a list of SDBs the client has access to
 func (s *SDB) GetByName(name string) (*api.SafeDepositBox, error) {
-	if len(name) == 0 {
-		return nil, ErrorSafeDepositBoxNotFound
-	}
-	allSDB, err := s.List()
-	if err != nil {
-		return nil, err
-	}
-	for _, v := range allSDB {
-		if v.Name == name {
-			return v, nil
-		}
-	}
-	// If we didn't find it in the list, return error that it wasn't found
-	return nil, ErrorSafeDepositBoxNotFound
+	return s.getBy("name", name)
 }
 
 // GetByPath is a helper method that takes an SDB path and attempts
 // to locate that box in a list of SDBs the client has access to
 func (s *SDB) GetByPath(path string) (*api.SafeDepositBox, error) {
-	if len(path) == 0 {
+	return s.getBy("path", path)
+}
+
+func (s *SDB) getBy(key, value string) (*api.SafeDepositBox, error) {
+	if len(value) == 0 {
 		return nil, ErrorSafeDepositBoxNotFound
 	}
 	allSDBs, err := s.List()
 	if err != nil {
 		return nil, err
 	}
+
 	for _, sdb := range allSDBs {
-		if sdb.Path == path || sdb.Path == path+"/" {
-			return sdb, nil
+		if key == "name" {
+			if sdb.Name == value {
+				return sdb, nil
+			}
+		} else if key == "path" {
+			if sdb.Path == value || sdb.Path == value+"/" {
+				return sdb, nil
+			}
+		} else {
+			return nil, fmt.Errorf("key is not either 'name' or 'path', must be one of these two")
 		}
 	}
 
