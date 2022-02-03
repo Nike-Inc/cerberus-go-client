@@ -388,6 +388,18 @@ func TestGetByPath(t *testing.T) {
 	})
 }
 
+func TestGetBy(t *testing.T) {
+	Convey("A GetBy with invalid key", t, func() {
+		cl, _ := NewClient(GenerateMockAuth("http://127.0.0.1:32876", "a-cool-token", false, false), nil)
+		So(cl, ShouldNotBeNil)
+		Convey("Should return an error", func() {
+			sdb, err := cl.SDB().getBy("owner", "cerb")
+			So(err, ShouldNotBeNil)
+			So(sdb, ShouldBeNil)
+		})
+	})
+}
+
 func TestCreateSDB(t *testing.T) {
 	var id = "a7d703da-faac-11e5-a8a9-7fa3b294cd46"
 	var validResponse = `{
