@@ -71,9 +71,9 @@ func NewSTSAuth(cerberusURL, region string) (*STSAuth, error) {
 }
 
 //WithCredentials sets credentials for the STSAuth
-func (s *STSAuth) WithCredentials(c *credentials.Credentials) *STSAuth {
-	s.credentials = c
-	return s
+func (a *STSAuth) WithCredentials(c *credentials.Credentials) *STSAuth {
+	a.credentials = c
+	return a
 }
 
 // GetToken returns a token if it already exists and is not expired. Otherwise,

@@ -325,7 +325,7 @@ func TestSigner(t *testing.T) {
 	Convey("A signer with credentials", t, func() {
 		os.Setenv("AWS_ACCESS_KEY_ID", "access")
 		os.Setenv("AWS_SECRET_ACCESS_KEY", "secret")
-		a, e := signer(creds())
+		a, e := signer()
 		Convey("Should return a signer", func() {
 			So(a, ShouldNotBeNil)
 			So(e, ShouldBeNil)

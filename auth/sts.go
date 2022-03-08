@@ -39,7 +39,6 @@ type STSAuth struct {
 	expiry  time.Time
 	baseURL *url.URL
 	headers http.Header
-	credentials *credentials.Credentials
 }
 
 // NewSTSAuth returns an STSAuth given a valid URL and region.
@@ -65,14 +64,7 @@ func NewSTSAuth(cerberusURL, region string) (*STSAuth, error) {
 		headers: http.Header{
 			"Content-Type": []string{"application/json"},
 		},
-		credentials: creds(),
 	}, nil
-}
-
-//WithCredentials sets credentials for the STSAuth
-func (s *STSAuth) WithCredentials(c *credentials.Credentials) *STSAuth {
-	s.credentials = c
-	return s
 }
 
 // GetToken returns a token if it already exists and is not expired. Otherwise,
@@ -199,7 +191,8 @@ func creds() *credentials.Credentials {
 }
 
 // signer returns a V4 signer for signing a request.
-func signer(creds *credentials.Credentials) (*v4.Signer, error) {
+func signer() (*v4.Signer, error) {
+	creds := creds()
 	_, err := creds.Get()
 	if err != nil {
 		return nil, fmt.Errorf("Credentials are required and cannot be found: %v", err)
@@ -231,7 +224,7 @@ func (a *STSAuth) request() (*http.Request, error) {
 
 // sign signs a AWS v4 request and returns the signed headers.
 func (a *STSAuth) sign() (http.Header, error) {
-	signer, signErr := signer(a.credentials)
+	signer, signErr := signer()
 	if signErr != nil {
 		return nil, signErr
 	}
