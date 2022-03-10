@@ -72,6 +72,23 @@ func TestNewSTSAuth(t *testing.T) {
 	})
 }
 
+func TestWithCredentials(t *testing.T) {
+	Convey("Setting custom credentials for a valid STSAuth", t, func() {
+		a, err := NewSTSAuth("https://test.example.com", "us-east-1")
+		So(err, ShouldBeNil)
+		So(a, ShouldNotBeNil)
+
+		value := credentials.Value{AccessKeyID: "access", SecretAccessKey: "secret", SessionToken: "session",
+			ProviderName: "provider"}
+		c := credentials.NewStaticCredentialsFromCreds(value)
+
+		a.WithCredentials(c)
+		Convey("Should result in changed credentials", func() {
+			So(a.credentials, ShouldEqual, c)
+		})
+	})
+}
+
 func TestGetTokenSTS(t *testing.T) {
 	Convey("A valid STSAuth", t, TestingServer(http.StatusOK, "/v2/auth/sts-identity",
 		http.MethodPost, responseBody, map[string]string{"X-Amz-Date": "date",
