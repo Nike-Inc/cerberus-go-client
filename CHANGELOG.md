@@ -2,6 +2,9 @@
 
 All notable changes to `Cerberus Go Client` will be documented in this file. 
 
+### Add support for user provided AWS credentials (v3.0.6) - March 2022
+User can provide his own AWS credentials for the STSAuth method when calling `WithCredentials`.
+
 ### Fix for Vault token refresh (v0.3.1) - July 2017
 When the API requested a refresh, the client was correctly refreshing the token.
 However, it was not updating the token assigned to the underlying Vault client.
