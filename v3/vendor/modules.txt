@@ -31,7 +31,7 @@ github.com/aws/aws-sdk-go/private/protocol/rest
 github.com/cenkalti/backoff
 # github.com/golang/snappy v0.0.1
 github.com/golang/snappy
-# github.com/google/go-cmp v0.5.5
+# github.com/google/go-cmp v0.5.8
 ## explicit
 github.com/google/go-cmp/cmp
 github.com/google/go-cmp/cmp/internal/diff
@@ -133,8 +133,6 @@ golang.org/x/text/unicode/norm
 # golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 ## explicit
 golang.org/x/time/rate
-# golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1
-## explicit
 # gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b
 ## explicit
 # gopkg.in/square/go-jose.v2 v2.3.1
