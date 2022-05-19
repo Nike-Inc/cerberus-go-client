@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 clean:
 	go clean
 	rm -rfv vendor
@@ -8,12 +9,14 @@ install:
 vendor:
 	go mod vendor -v
 
+=======
+>>>>>>> master
 test:
 	go test -v ./api ./auth ./cerberus ./utils -coverprofile=profile.out -covermode=atomic
 	cat profile.out >> ../coverage.txt
 	rm profile.out
 
-build:
-	go build -o cerberus-client
+clean:
+	go clean
 
-.PHONY: test bootstrap build
+.PHONY: test clean

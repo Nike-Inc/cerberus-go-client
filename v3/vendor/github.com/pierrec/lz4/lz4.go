@@ -20,8 +20,9 @@ const (
 	// Version is the LZ4 frame format version
 	Version = 1
 
-	frameMagic     uint32 = 0x184D2204
-	frameSkipMagic uint32 = 0x184D2A50
+	frameMagic       uint32 = 0x184D2204
+	frameSkipMagic   uint32 = 0x184D2A50
+	frameMagicLegacy uint32 = 0x184C2102
 
 	// The following constants are used to setup the compression algorithm.
 	minMatch            = 4  // the minimum size of the match sequence size (4 bytes)

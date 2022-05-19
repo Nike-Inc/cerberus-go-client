@@ -347,3 +347,79 @@ func (c *Sys) PutRaftAutopilotConfigurationWithContext(ctx context.Context, opts
 
 	return nil
 }
+
+// RaftAutopilotState returns the state of the raft cluster as seen by autopilot.
+func (c *Sys) RaftAutopilotState() (*AutopilotState, error) {
+	r := c.c.NewRequest("GET", "/v1/sys/storage/raft/autopilot/state")
+
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	defer cancelFunc()
+	resp, err := c.c.RawRequestWithContext(ctx, r)
+	if resp != nil {
+		defer resp.Body.Close()
+		if resp.StatusCode == 404 {
+			return nil, nil
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	secret, err := ParseSecret(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if secret == nil || secret.Data == nil {
+		return nil, errors.New("data from server response is empty")
+	}
+
+	var result AutopilotState
+	err = mapstructure.Decode(secret.Data, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return &result, err
+}
+
+// RaftAutopilotConfiguration fetches the autopilot config.
+func (c *Sys) RaftAutopilotConfiguration() (*AutopilotConfig, error) {
+	r := c.c.NewRequest("GET", "/v1/sys/storage/raft/autopilot/configuration")
+
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	defer cancelFunc()
+	resp, err := c.c.RawRequestWithContext(ctx, r)
+	if resp != nil {
+		defer resp.Body.Close()
+		if resp.StatusCode == 404 {
+			return nil, nil
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	secret, err := ParseSecret(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	if secret == nil {
+		return nil, errors.New("data from server response is empty")
+	}
+
+	var result AutopilotConfig
+	if err = mapstructure.Decode(secret.Data, &result); err != nil {
+		return nil, err
+	}
+	if result.LastContactThreshold, err = parseutil.ParseDurationSecond(secret.Data["last_contact_threshold"]); err != nil {
+		return nil, err
+	}
+	if result.DeadServerLastContactThreshold, err = parseutil.ParseDurationSecond(secret.Data["dead_server_last_contact_threshold"]); err != nil {
+		return nil, err
+	}
+	if result.ServerStabilizationTime, err = parseutil.ParseDurationSecond(secret.Data["server_stabilization_time"]); err != nil {
+		return nil, err
+	}
+
+	return &result, err
+}

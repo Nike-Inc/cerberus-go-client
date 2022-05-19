@@ -1864,7 +1864,7 @@ func findNextFile1(handle Handle, data *win32finddata1) (err error) {
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
-	return
+	return _DnsQuery(_p0, qtype, options, extra, qrs, pr)
 }
 
 func FindNextVolumeMountPoint(findVolumeMountPoint Handle, volumeMountPoint *uint16, bufferLength uint32) (err error) {
@@ -2211,7 +2211,7 @@ func GetOverlappedResult(handle Handle, overlapped *Overlapped, done *uint32, wa
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
-	return
+	return _FindFirstChangeNotification(_p0, watchSubtree, notifyFilter)
 }
 
 func GetPriorityClass(process Handle) (ret uint32, err error) {
@@ -2691,7 +2691,7 @@ func ProcessIdToSessionId(pid uint32, sessionid *uint32) (err error) {
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
-	return
+	return _GetProcAddress(module, _p0)
 }
 
 func PulseEvent(event Handle) (err error) {
@@ -3410,6 +3410,8 @@ func CoInitializeEx(reserved uintptr, coInit uint32) (ret error) {
 	if r0 != 0 {
 		ret = syscall.Errno(r0)
 	}
+	r0, _, _ := syscall.Syscall(procSleepEx.Addr(), 2, uintptr(milliseconds), uintptr(_p0), 0)
+	ret = uint32(r0)
 	return
 }
 
@@ -3742,6 +3744,7 @@ func setupUninstallOEMInf(infFileName *uint16, flags SUOI, reserved uintptr) (er
 	if r1 == 0 {
 		err = errnoErr(e1)
 	}
+	syscall.Syscall(procUnsubscribeServiceChangeNotifications.Addr(), 1, uintptr(subscription), 0, 0)
 	return
 }
 

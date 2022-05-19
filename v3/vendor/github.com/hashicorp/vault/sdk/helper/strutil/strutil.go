@@ -92,3 +92,26 @@ func Difference(a, b []string, lowercase bool) []string {
 func GetString(m map[string]interface{}, key string) (string, error) {
 	return extstrutil.GetString(m, key)
 }
+
+// GetString attempts to retrieve a value from the provided map and assert that it is a string. If the key does not
+// exist in the map, this will return an empty string. If the key exists, but the value is not a string type, this will
+// return an error. If no map or key is provied, this will return an error
+func GetString(m map[string]interface{}, key string) (string, error) {
+	if m == nil {
+		return "", fmt.Errorf("missing map")
+	}
+	if key == "" {
+		return "", fmt.Errorf("missing key")
+	}
+
+	rawVal, ok := m[key]
+	if !ok {
+		return "", nil
+	}
+
+	str, ok := rawVal.(string)
+	if !ok {
+		return "", fmt.Errorf("invalid value at %s: is a %T", key, rawVal)
+	}
+	return str, nil
+}

@@ -17,14 +17,15 @@ limitations under the License.
 package integration
 
 import (
+	"os"
+	"testing"
+
 	"github.com/Nike-Inc/cerberus-go-client/api"
 	"github.com/Nike-Inc/cerberus-go-client/auth"
 	"github.com/Nike-Inc/cerberus-go-client/cerberus"
 	"github.com/google/go-cmp/cmp"
-	"github.com/satori/go.uuid"
+	uuid "github.com/satori/go.uuid"
 	. "github.com/smartystreets/goconvey/convey"
-	"os"
-	"testing"
 )
 
 func TestClient(t *testing.T) {
@@ -34,8 +35,8 @@ func TestClient(t *testing.T) {
 			t.Error("TEST_REGION must be set as an environment variable")
 		}
 
-		var cerberusUrl = os.Getenv("TEST_CERBERUS_URL")
-		if cerberusUrl == "" {
+		var cerberusURL = os.Getenv("TEST_CERBERUS_URL")
+		if cerberusURL == "" {
 			t.Error("TEST_CERBERUS_URL must be set as an environment variable")
 		}
 
@@ -50,7 +51,7 @@ func TestClient(t *testing.T) {
 		}
 
 		Convey("Should authenticate with STS Auth", func() {
-			authMethod, authErr := auth.NewSTSAuth(cerberusUrl, region)
+			authMethod, authErr := auth.NewSTSAuth(cerberusURL, region)
 			So(authErr, ShouldBeNil)
 			So(authMethod, ShouldNotBeNil)
 			token, tokenErr := authMethod.GetToken(nil)
@@ -73,7 +74,7 @@ func TestClient(t *testing.T) {
 					if len(list) < 1 {
 						t.Error("Must have at least one category of SDBs in Cerberus")
 					}
-					uuid := uuid.NewV4()
+					uuid, _ := uuid.NewV4()
 					name := "Cerberus Go Client Test " + uuid.String()
 					category := list[0]
 					iamPrincipalPerm := []api.IAMPrincipal{{

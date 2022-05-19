@@ -1,5 +1,5 @@
 cerberus-client
 .DS_Store
 .idea/
-coverage.txt
-v3/coverage.txt
+.vscode/
+**/coverage.txt

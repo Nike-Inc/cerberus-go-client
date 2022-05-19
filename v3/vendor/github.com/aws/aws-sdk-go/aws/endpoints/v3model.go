@@ -375,6 +375,10 @@ func (s *service) endpointForRegion(region string, endpoints serviceEndpoints, v
 		return endpoints[endpointKey{Region: s.PartitionEndpoint, Variant: variant}], region == s.PartitionEndpoint
 	}
 
+	if s.IsRegionalized == boxedFalse {
+		return s.Endpoints[s.PartitionEndpoint], region == s.PartitionEndpoint
+	}
+
 	// Unable to find any matching endpoint, return
 	// blank that will be used for generic endpoint creation.
 	return endpoint{}, false

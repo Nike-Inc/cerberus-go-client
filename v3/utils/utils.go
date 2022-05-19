@@ -81,5 +81,3 @@ func ParseAPIError(r io.Reader) error {
 	}
 	return apiErr
 }
-
-

@@ -1,6 +1,8 @@
 package api
 
-import "context"
+import (
+	"context"
+)
 
 // TokenAuth is used to perform token backend operations on Vault
 type TokenAuth struct {
@@ -103,6 +105,26 @@ func (c *TokenAuth) LookupAccessor(accessor string) (*Secret, error) {
 
 func (c *TokenAuth) LookupSelf() (*Secret, error) {
 	r := c.c.NewRequest("GET", "/v1/auth/token/lookup-self")
+
+	ctx, cancelFunc := context.WithCancel(context.Background())
+	defer cancelFunc()
+	resp, err := c.c.RawRequestWithContext(ctx, r)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	return ParseSecret(resp.Body)
+}
+
+func (c *TokenAuth) RenewAccessor(accessor string, increment int) (*Secret, error) {
+	r := c.c.NewRequest("POST", "/v1/auth/token/renew-accessor")
+	if err := r.SetJSONBody(map[string]interface{}{
+		"accessor":  accessor,
+		"increment": increment,
+	}); err != nil {
+		return nil, err
+	}
 
 	ctx, cancelFunc := context.WithCancel(context.Background())
 	defer cancelFunc()
@@ -272,4 +294,5 @@ type TokenCreateRequest struct {
 	NumUses         int               `json:"num_uses"`
 	Renewable       *bool             `json:"renewable,omitempty"`
 	Type            string            `json:"type"`
+	EntityAlias     string            `json:"entity_alias"`
 }

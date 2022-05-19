@@ -398,6 +398,24 @@ func DefaultRetryPolicy(ctx context.Context, resp *http.Response, err error) (bo
 		return false, ctx.Err()
 	}
 
+	// don't propagate other errors
+	shouldRetry, _ := baseRetryPolicy(resp, err)
+	return shouldRetry, nil
+}
+
+// ErrorPropagatedRetryPolicy is the same as DefaultRetryPolicy, except it
+// propagates errors back instead of returning nil. This allows you to inspect
+// why it decided to retry or not.
+func ErrorPropagatedRetryPolicy(ctx context.Context, resp *http.Response, err error) (bool, error) {
+	// do not retry on context.Canceled or context.DeadlineExceeded
+	if ctx.Err() != nil {
+		return false, ctx.Err()
+	}
+
+	return baseRetryPolicy(resp, err)
+}
+
+func baseRetryPolicy(resp *http.Response, err error) (bool, error) {
 	if err != nil {
 		if v, ok := err.(*url.Error); ok {
 			// Don't retry if the error was due to too many redirects.
@@ -425,7 +443,7 @@ func DefaultRetryPolicy(ctx context.Context, resp *http.Response, err error) (bo
 	// errors and may relate to outages on the server side. This will catch
 	// invalid response codes as well, like 0 and 999.
 	if resp.StatusCode == 0 || (resp.StatusCode >= 500 && resp.StatusCode != 501) {
-		return true, nil
+		return true, fmt.Errorf("unexpected HTTP status %s", resp.Status)
 	}
 
 	return false, nil
@@ -434,7 +452,21 @@ func DefaultRetryPolicy(ctx context.Context, resp *http.Response, err error) (bo
 // DefaultBackoff provides a default callback for Client.Backoff which
 // will perform exponential backoff based on the attempt number and limited
 // by the provided minimum and maximum durations.
+//
+// It also tries to parse Retry-After response header when a http.StatusTooManyRequests
+// (HTTP Code 429) is found in the resp parameter. Hence it will return the number of
+// seconds the server states it may be ready to process more requests from this client.
 func DefaultBackoff(min, max time.Duration, attemptNum int, resp *http.Response) time.Duration {
+	if resp != nil {
+		if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode == http.StatusServiceUnavailable {
+			if s, ok := resp.Header["Retry-After"]; ok {
+				if sleep, err := strconv.ParseInt(s[0], 10, 64); err == nil {
+					return time.Second * time.Duration(sleep)
+				}
+			}
+		}
+	}
+
 	mult := math.Pow(2, float64(attemptNum)) * float64(min)
 	sleep := time.Duration(mult)
 	if float64(sleep) != mult || sleep > max {
@@ -506,9 +538,13 @@ func (c *Client) Do(req *Request) (*http.Response, error) {
 	}
 
 	var resp *http.Response
-	var err error
+	var attempt int
+	var shouldRetry bool
+	var doErr, checkErr error
 
 	for i := 0; ; i++ {
+		attempt++
+
 		var code int // HTTP response code
 
 		// Always rewind the request body when non-nil.
@@ -537,7 +573,7 @@ func (c *Client) Do(req *Request) (*http.Response, error) {
 		}
 
 		// Attempt the request
-		resp, err = c.HTTPClient.Do(req.Request)
+		resp, doErr = c.HTTPClient.Do(req.Request)
 		if resp != nil {
 			code = resp.StatusCode
 		}
@@ -585,7 +621,7 @@ func (c *Client) Do(req *Request) (*http.Response, error) {
 		}
 
 		// We're going to retry, consume any response to reuse the connection.
-		if err == nil && resp != nil {
+		if doErr == nil {
 			c.drainBody(resp.Body)
 		}
 
@@ -608,6 +644,23 @@ func (c *Client) Do(req *Request) (*http.Response, error) {
 			return nil, req.Context().Err()
 		case <-time.After(wait):
 		}
+
+		// Make shallow copy of http Request so that we can modify its body
+		// without racing against the closeBody call in persistConn.writeLoop.
+		httpreq := *req.Request
+		req.Request = &httpreq
+	}
+
+	// this is the closest we have to success criteria
+	if doErr == nil && checkErr == nil && !shouldRetry {
+		return resp, nil
+	}
+
+	defer c.HTTPClient.CloseIdleConnections()
+
+	err := doErr
+	if checkErr != nil {
+		err = checkErr
 	}
 
 	if c.ErrorHandler != nil {
@@ -618,7 +671,7 @@ func (c *Client) Do(req *Request) (*http.Response, error) {
 	// By default, we close the response body and return an error without
 	// returning the response
 	if resp != nil {
-		resp.Body.Close()
+		c.drainBody(resp.Body)
 	}
 	c.HTTPClient.CloseIdleConnections()
 	return nil, fmt.Errorf("%s %s giving up after %d attempts",

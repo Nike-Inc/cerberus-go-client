@@ -1,6 +1,6 @@
 module github.com/Nike-Inc/cerberus-go-client/v3
 
-go 1.15
+go 1.17
 
 require (
 	github.com/aws/aws-sdk-go v1.44.16
