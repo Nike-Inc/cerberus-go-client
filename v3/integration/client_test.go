@@ -17,7 +17,6 @@ limitations under the License.
 package integration
 
 import (
-	"github.com/Nike-Inc/cerberus-go-client/v3/api"
 	"github.com/Nike-Inc/cerberus-go-client/v3/auth"
 	"github.com/Nike-Inc/cerberus-go-client/v3/cerberus"
 	"github.com/google/go-cmp/cmp"
@@ -44,9 +43,9 @@ func TestClient(t *testing.T) {
 			t.Error("IAM_PRINCIPAL must be set as an environment variable")
 		}
 
-		var userGroup = os.Getenv("USER_GROUP")
-		if userGroup == "" {
-			t.Error("USER_GROUP must be set as an environment variable")
+		var sdbPath = os.Getenv("INTEGRATION_TEST_SDB_PATH")
+		if iamPrincipal == "" {
+			t.Error("INTEGRATION_TEST_SDB_PATH must be set as an environment variable")
 		}
 
 		Convey("Should authenticate with STS Auth", func() {
@@ -65,52 +64,21 @@ func TestClient(t *testing.T) {
 				So(tok, ShouldEqual, token)
 				So(getTokenErr, ShouldBeNil)
 
-				Convey("And should create an SDB", func() {
-					list, cateErr := client.Category().List()
-					So(cateErr, ShouldBeNil)
-					permList, permErr := client.Role().List()
-					So(permErr, ShouldBeNil)
-					if len(list) < 1 {
-						t.Error("Must have at least one category of SDBs in Cerberus")
-					}
+				Convey("And should write a secret", func() {
 					uuid, _ := uuid.NewV4()
-					name := "Cerberus Go Client Test " + uuid.String()
-					category := list[0]
-					iamPrincipalPerm := []api.IAMPrincipal{{
-						IAMPrincipalARN: iamPrincipal,
-						RoleID:          permList[0].ID,
-					}}
+					path := sdbPath + "/secret-payload-" + uuid.String()
+					testSecretPayload := map[string]interface{}{"bar": "bop"}
+					_, writeErr := client.Secret().Write(path, testSecretPayload)
+					So(writeErr, ShouldBeNil)
 
-					newSDB, createErr := client.SDB().Create(&api.SafeDepositBox{
-						Name:                    name,
-						Description:             "A test SDB",
-						Owner:                   userGroup,
-						CategoryID:              category.ID,
-						IAMPrincipalPermissions: iamPrincipalPerm,
-					})
-					So(createErr, ShouldBeNil)
-					So(newSDB, ShouldNotBeNil)
+					Convey("And should read a secret", func() {
+						readSecret, readErr := client.Secret().Read(path)
+						So(readErr, ShouldBeNil)
+						So(cmp.Equal(readSecret.Data, testSecretPayload), ShouldBeTrue)
 
-					Convey("And should write a secret", func() {
-						path := newSDB.Path + "secret-payload"
-						testSecretPayload := map[string]interface{}{"bar": "bop"}
-						_, writeErr := client.Secret().Write(path, testSecretPayload)
-						So(writeErr, ShouldBeNil)
-
-						Convey("And should read a secret", func() {
-							readSecret, readErr := client.Secret().Read(path)
-							So(readErr, ShouldBeNil)
-							So(cmp.Equal(readSecret.Data, testSecretPayload), ShouldBeTrue)
-
-							Convey("And should delete a secret", func() {
-								_, delErr := client.Secret().Delete(path)
-								So(delErr, ShouldBeNil)
-
-								Convey("And should delete the created SDB", func() {
-									err := client.SDB().Delete(newSDB.ID)
-									So(err, ShouldBeNil)
-								})
-							})
+						Convey("And should delete a secret", func() {
+							_, delErr := client.Secret().Delete(path)
+							So(delErr, ShouldBeNil)
 						})
 					})
 				})
