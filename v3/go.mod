@@ -3,7 +3,7 @@ module github.com/Nike-Inc/cerberus-go-client/v3
 go 1.17
 
 require (
-	github.com/aws/aws-sdk-go v1.44.16
+	github.com/aws/aws-sdk-go v1.44.89
 	github.com/cenkalti/backoff v2.2.1+incompatible
 	github.com/google/go-cmp v0.5.8
 	github.com/hashicorp/vault/api v1.5.0
