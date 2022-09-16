@@ -169,6 +169,7 @@ type MetadataResponse struct {
 
 // SDBMetadata represents the metadata of a specific SDB
 type SDBMetadata struct {
+	Id                   string
 	Name                 string
 	Path                 string
 	Category             string
