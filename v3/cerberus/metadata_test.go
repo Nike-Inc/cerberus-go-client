@@ -37,6 +37,7 @@ var metadataBody = `{
     "total_sdbcount": 2,
     "safe_deposit_box_metadata": [
         {
+            "id": "eeeeeee-eeeeeeee-eeeeeeeeee-eee",
             "name": "dev demo",
             "path": "app/dev-demo/",
             "category": "Applications",
@@ -54,6 +55,8 @@ var metadataBody = `{
             }
         },
         {
+            "id": "fffffff-ffffffff-ffffffffff-fff",
+            "pony": "pony",
             "name": "IaM W d WASD",
             "path": "shared/iam-w-d-wasd/",
             "category": "Shared",
@@ -78,6 +81,7 @@ var expectedMetadata = &api.MetadataResponse{
 	TotalCount:  2,
 	Metadata: []api.SDBMetadata{
 		api.SDBMetadata{
+			Id:            "eeeeeee-eeeeeeee-eeeeeeeeee-eee",
 			Name:          "dev demo",
 			Path:          "app/dev-demo/",
 			Category:      "Applications",
@@ -95,6 +99,7 @@ var expectedMetadata = &api.MetadataResponse{
 			},
 		},
 		api.SDBMetadata{
+			Id:                   "fffffff-ffffffff-ffffffffff-fff",
 			Name:                 "IaM W d WASD",
 			Path:                 "shared/iam-w-d-wasd/",
 			Category:             "Shared",
