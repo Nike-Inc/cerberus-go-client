@@ -27,7 +27,7 @@ import (
 )
 
 // ClientHeader is the header version for all requests. It should be updated on version bumps
-const ClientHeader = "CerberusGoClient/3.0.10"
+const ClientHeader = "CerberusGoClient/3.0.11"
 
 // AuthStatus is the status of a UserAuthResponse
 type AuthStatus string
