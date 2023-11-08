@@ -46,6 +46,12 @@ func (s *Secret) Read(path string) (*vault.Secret, error) {
 	return s.v.Read(pathPrefix + path)
 }
 
+// ReadWithData returns the secret at the given path with given parameters. Path should not be prefaced with a "/"
+func (s *Secret) ReadWithData(path string, data map[string][]string) (*vault.Secret, error) {
+	return s.v.ReadWithData(pathPrefix + path, data)
+}
+
+
 // Write creates a new secret at the given path. Path should not be prefaced with a "/"
 func (s *Secret) Write(path string, data map[string]interface{}) (*vault.Secret, error) {
 	return s.v.Write(pathPrefix+path, data)
